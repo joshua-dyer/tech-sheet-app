@@ -1,0 +1,208 @@
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function getDisplayValue(field) {
+  switch (field.type) {
+    case 'text':
+    case 'number':
+    case 'date':
+    case 'textarea': {
+      const el = document.getElementById(field.id);
+      return el ? el.value.trim() : '';
+    }
+    case 'select': {
+      const el = document.getElementById(field.id);
+      return el ? el.value : '';
+    }
+    case 'radio': {
+      const checked = document.querySelector(`input[name="${field.id}"]:checked`);
+      return checked ? checked.value : '';
+    }
+    case 'checkbox': {
+      const el = document.getElementById(field.id);
+      return el && el.checked ? 'Yes' : '';
+    }
+    case 'checkbox-group': {
+      const checked = document.querySelectorAll(`input[name="${field.id}"]:checked`);
+      return Array.from(checked)
+        .map((input) => input.value)
+        .join(', ');
+    }
+    case 'computed': {
+      const el = document.getElementById(field.id);
+      return el ? el.textContent.trim() : '';
+    }
+    default:
+      return '';
+  }
+}
+
+function isFieldVisible(field) {
+  if (!field.hiddenByDefault) return true;
+  const wrapper = document.getElementById(`field-wrap-${field.id}`);
+  return wrapper ? !wrapper.hidden : false;
+}
+
+function hasValue(field) {
+  const value = getDisplayValue(field);
+  return value !== '' && value !== '—';
+}
+
+// A field prints if it has a value, or if it defines emptyPrintText — a
+// non-diagnostic placeholder (e.g. Gallbladder's "No abnormalities noted")
+// standing in for "the technologist checked, nothing was flagged".
+function shouldPrintField(field) {
+  return hasValue(field) || Boolean(field.emptyPrintText);
+}
+
+function renderFieldRow(field) {
+  const value = hasValue(field) ? getDisplayValue(field) : field.emptyPrintText;
+  const label = field.unit ? `${field.label} (${field.unit})` : field.label;
+  return `<div class="print-row"><span class="print-label">${escapeHtml(label)}</span><span class="print-value">${escapeHtml(value)}</span></div>`;
+}
+
+// Returns '' (and is skipped entirely) when nothing in the section was ever
+// filled in or triggered, so blank sections don't waste printed space.
+function renderSectionHtml(section) {
+  const rows = section.fields
+    .filter((field) => isFieldVisible(field) && shouldPrintField(field))
+    .map(renderFieldRow)
+    .join('');
+  if (!rows) return '';
+  return `<section class="print-section"><h2>${escapeHtml(section.title)}</h2>${rows}</section>`;
+}
+
+// Patient identity vs. this-visit details — confirmed grouping for the
+// Demographics section's two print columns.
+const DEMOGRAPHICS_LEFT_IDS = ['lastName', 'firstName', 'patientId', 'dob', 'age', 'sex', 'sexOther'];
+const DEMOGRAPHICS_RIGHT_IDS = ['examDate', 'orderingPhysician', 'indications', 'priorStudy', 'priorStudyDetail'];
+
+function renderDemographicsHtml(section) {
+  const visibleFields = section.fields.filter((field) => isFieldVisible(field) && shouldPrintField(field));
+  const byId = new Map(visibleFields.map((field) => [field.id, field]));
+
+  const leftFields = DEMOGRAPHICS_LEFT_IDS.map((id) => byId.get(id)).filter(Boolean);
+  const rightFields = DEMOGRAPHICS_RIGHT_IDS.map((id) => byId.get(id)).filter(Boolean);
+
+  // Safety net: any Demographics field not yet assigned to a column (e.g. a
+  // future addition) still prints, alternating into whichever column it lands on.
+  const placedIds = new Set([...DEMOGRAPHICS_LEFT_IDS, ...DEMOGRAPHICS_RIGHT_IDS]);
+  visibleFields
+    .filter((field) => !placedIds.has(field.id))
+    .forEach((field, i) => (i % 2 === 0 ? leftFields : rightFields).push(field));
+
+  if (leftFields.length === 0 && rightFields.length === 0) return '';
+
+  const leftHtml = leftFields.map(renderFieldRow).join('');
+  const rightHtml = rightFields.map(renderFieldRow).join('');
+
+  return `<section class="print-section"><h2>${escapeHtml(section.title)}</h2><div class="demographics-columns"><div class="demographics-col">${leftHtml}</div><div class="demographics-col">${rightHtml}</div></div></section>`;
+}
+
+export function openPrintView(schema) {
+  const demographicsSection = schema.sections.find((s) => s.id === 'demographics');
+  const interpretationSection = schema.sections.find((s) => s.id === 'interpretation');
+  const commentsSection = schema.sections.find((s) => s.id === 'comments');
+  const otherSections = schema.sections.filter(
+    (s) => s.id !== 'demographics' && s.id !== 'interpretation' && s.id !== 'comments'
+  );
+
+  const interpretationField = interpretationSection?.fields.find((f) => f.type === 'textarea');
+  const hasInterpretation = interpretationField ? Boolean(getDisplayValue(interpretationField)) : false;
+
+  // Demographics (and Interpretation, when present) run full-width up top;
+  // the findings sections in between flow into two dense columns; Technologist
+  // Comments always trails as its own full-width section at the very end.
+  const demographicsHtml = demographicsSection ? renderDemographicsHtml(demographicsSection) : '';
+  const interpretationHtml = hasInterpretation ? renderSectionHtml(interpretationSection) : '';
+  const topHtml = demographicsHtml + interpretationHtml;
+  const columnsHtml = otherSections.map(renderSectionHtml).join('');
+  const commentsHtml = commentsSection ? renderSectionHtml(commentsSection) : '';
+
+  // Blocks are joined with a divider only where two real blocks meet, so an
+  // empty Findings or Comments section never leaves a stray trailing rule.
+  const blocks = [];
+  if (topHtml) blocks.push(`<div class="print-fullwidth">${topHtml}</div>`);
+  if (columnsHtml) {
+    blocks.push(
+      `<h2 class="print-group-title">Findings</h2><div class="print-columns">${columnsHtml}</div>`
+    );
+  }
+  if (commentsHtml) blocks.push(`<div class="print-fullwidth">${commentsHtml}</div>`);
+  const bodyHtml = blocks.join('<hr class="print-divider">');
+
+  const doc = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>${escapeHtml(schema.title)} — Print</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #1a1a1a;
+    background: #fff;
+    margin: 0.4in;
+    font-size: 0.82rem;
+    line-height: 1.25;
+  }
+  h1 { font-size: 1.15rem; margin: 0 0 0.6rem; }
+  .print-fullwidth .print-section { break-inside: avoid; }
+  .print-divider { border: none; border-top: 2px solid #333; margin: 0.5rem 0; }
+  .print-group-title {
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border-bottom: 2px solid #333;
+    padding-bottom: 0.15rem;
+    margin: 0 0 0.4rem;
+  }
+  .demographics-columns { display: flex; gap: 1.1rem; }
+  .demographics-col { flex: 1; min-width: 0; }
+  .print-columns {
+    column-count: 2;
+    column-gap: 1.1rem;
+  }
+  .print-section {
+    margin-bottom: 0.5rem;
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .print-section h2 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    border-bottom: 1px solid #999;
+    padding-bottom: 0.1rem;
+    margin: 0 0 0.2rem;
+  }
+  .print-row { display: flex; gap: 0.4rem; padding: 0.05rem 0; }
+  .print-label { font-weight: 600; flex: 0 0 auto; }
+  .print-label::after { content: ':'; }
+  .print-value { white-space: pre-wrap; }
+  @media print {
+    body { margin: 0.35in; }
+  }
+</style>
+</head>
+<body>
+<h1>${escapeHtml(schema.title)} — Tech Sheet</h1>
+${bodyHtml}
+</body>
+</html>`;
+
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) return;
+  printWindow.document.open();
+  printWindow.document.write(doc);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => printWindow.print(), 250);
+}

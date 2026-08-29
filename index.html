@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Abdominal Ultrasound Tech Sheet</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header class="app-header">
+  <h1>Abdominal Ultrasound Tech Sheet</h1>
+  <div class="toolbar">
+    <button type="button" id="printBtn" class="btn btn-accent">Print / Save as PDF</button>
+    <button type="button" id="clearBtn" class="btn btn-danger">Clear Sheet</button>
+  </div>
+</header>
+
+<main>
+  <form id="sheetMount" class="sheet"></form>
+</main>
+
+<div id="confirmModal" class="modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h2 id="modalTitle">Clear this sheet?</h2>
+    <p>This will erase all entered data on this tech sheet. This cannot be undone.</p>
+    <div class="modal-actions">
+      <button type="button" id="modalCancel" class="btn">Cancel</button>
+      <button type="button" id="modalConfirm" class="btn btn-danger">Clear Sheet</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
