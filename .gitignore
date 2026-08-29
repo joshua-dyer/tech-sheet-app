@@ -1,0 +1,10 @@
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Editor-specific
+.vscode/
+
+# Future-proofing, in case this project ever adds a build step
+node_modules/
+.env
