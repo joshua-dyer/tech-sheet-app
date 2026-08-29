@@ -76,19 +76,79 @@ added later (~15 total, 8 common).
   type (future phase) will call this same clear behavior before loading
   the new sheet
 
-  ## 7. Explicitly Out of Scope (Phase 1)
+## 7. Diagram Markup Feature (Thyroid, Carotid, Arterial sheets)
+
+Some sheets (not Abdominal) include a fixed anatomical diagram that
+technologists freehand-mark to indicate points of interest. This section
+defines the shared behavior for that feature across all sheets that use
+it.
+
+### Assets
+- Diagrams are simple, abstract, standard (not patient-specific) images
+- Provided as transparent-background PNGs
+
+### Activation
+- Each diagram has an "Enable Markup" checkbox, unchecked by default
+- When unchecked, the diagram is static/inert — no drawing possible,
+  no interference with normal form navigation
+- When checked, the diagram becomes an active drawing surface
+- Clicking/touching outside the image boundary while active
+  automatically unchecks "Enable Markup" (assumes the tech is moving on
+  to other fields)
+
+### Input handling
+- Must support Apple Pencil, mouse, trackpad, and direct touch
+  equivalently — implement via the Pointer Events API rather than
+  separate mouse/touch handlers, to avoid inconsistent behavior across
+  devices
+
+### Drawing behavior
+- Freehand strokes only — no typed/keyboard text input
+- Color: bright red, fixed (not user-selectable)
+- Each stroke is tracked as a discrete, undoable unit (not flattened
+  into a single static image while editing)
+- Thyroid sheet: technologist draws a circle plus a freehand-written
+  number (e.g. "1") to correspond with a nodule table elsewhere on the
+  sheet — this is a purely manual/visual convention, NOT auto-numbered,
+  and does NOT link/sync to the table programmatically
+- Carotid/Arterial sheets: technologist draws freehand scribble marks
+  directly over the area of plaque/stenosis — no numbering, anatomical
+  meaning is clear from placement and reinforced in Technologist
+  Comments
+- Often no marks are made at all if there's nothing to flag — this must
+  remain fully optional with no required interaction
+
+### Undo / Clear
+- "Undo" removes the most recently drawn stroke only
+- "Clear" removes all strokes on that diagram
+- Both should be scoped per-diagram if a sheet has more than one
+
+### Print / PDF output
+- The diagram and all drawn strokes must be flattened into a single
+  static image for print (e.g. via canvas export) and preserved in the
+  print/PDF output
+- The red stroke color MUST be preserved in print/PDF output — this is
+  a deliberate exception to typical print-color-reduction practices,
+  since many sites keep these as PDFs/digital images rather than
+  printing on paper, and the red is functionally important for
+  visibility, not decorative
+
+  ## 8. Explicitly Out of Scope (Phase 1)
 - Auto-population of Technologist Comments based on measurement values
   (Liver >16.5cm, Kidney Cortex <1.3cm, Spleen ≥13cm) — this is planned
   for Phase 2, after the visual/layout design is finalized. Do not
   implement the auto-population logic yet, but the Technologist Comments
   field should exist as a plain textarea now.
 - Physician Interpretation content/workflow
-- Additional ultrasound sheet types beyond Abdominal
+- Additional ultrasound sheet types beyond Abdominal are not part of this
+  phase's build, but Thyroid (with the diagram markup feature from
+  Section 7) is the planned next phase, to begin after Abdominal has
+  been tested in real use.
 - Data persistence via backend/database (export is handled via the
   Print/PDF feature in Section 6, not stored anywhere at this time)
 - Any backend, database, or account system
 
-## 8. Architecture Note
+## 9. Architecture Note
 Build with reuse in mind: this is the first of ~15 planned tech sheets
 (8 common). Favor a reusable field/section component pattern over
 one-off hand-coded HTML per form, so future sheet types can be added

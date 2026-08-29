@@ -131,11 +131,21 @@ export const abdominalSheet = {
       id: 'pancreas',
       title: 'Pancreas',
       rowLabel: 'Measurements',
+      // Printed when no measurement was entered and Poorly Visualized wasn't
+      // checked — same non-diagnostic-placeholder pattern as Gallbladder's
+      // field-level emptyPrintText, applied here at the section level since
+      // "no Pancreas entry" spans several independent fields, not one.
+      emptyPrintText: 'No abnormalities noted',
       fields: [
         { id: 'pancreasHead', label: 'Head', type: 'number', unit: 'cm', row: true },
         { id: 'pancreasBody', label: 'Body', type: 'number', unit: 'cm', row: true },
         { id: 'pancreasTail', label: 'Tail', type: 'number', unit: 'cm', row: true },
         { id: 'pancreasDuct', label: 'Duct', type: 'number', unit: 'cm', row: true },
+        {
+          id: 'pancreasPoorlyVisualized',
+          label: 'Poorly Visualized',
+          type: 'checkbox',
+        },
       ],
     },
     {
@@ -176,7 +186,14 @@ export const abdominalSheet = {
       fields: [
         // Auto-population from measurement thresholds (Liver >16.5cm, Kidney
         // Cortex <1.3cm, Spleen ≥13cm) is planned for Phase 2 — not implemented yet.
-        { id: 'comments', label: 'Technologist Comments', type: 'textarea', large: true },
+        {
+          id: 'comments',
+          label: 'Technologist Comments',
+          type: 'textarea',
+          large: true,
+          // Section already has this exact title as its print heading.
+          omitPrintLabel: true,
+        },
       ],
     },
     {

@@ -63,19 +63,29 @@ function shouldPrintField(field) {
 
 function renderFieldRow(field) {
   const value = hasValue(field) ? getDisplayValue(field) : field.emptyPrintText;
+  if (field.omitPrintLabel) {
+    return `<div class="print-row"><span class="print-value">${escapeHtml(value)}</span></div>`;
+  }
   const label = field.unit ? `${field.label} (${field.unit})` : field.label;
   return `<div class="print-row"><span class="print-label">${escapeHtml(label)}</span><span class="print-value">${escapeHtml(value)}</span></div>`;
 }
 
 // Returns '' (and is skipped entirely) when nothing in the section was ever
-// filled in or triggered, so blank sections don't waste printed space.
+// filled in or triggered, so blank sections don't waste printed space —
+// unless the section defines emptyPrintText (e.g. Pancreas), in which case
+// that non-diagnostic placeholder prints in place of the omitted section.
 function renderSectionHtml(section) {
   const rows = section.fields
     .filter((field) => isFieldVisible(field) && shouldPrintField(field))
     .map(renderFieldRow)
     .join('');
-  if (!rows) return '';
-  return `<section class="print-section"><h2>${escapeHtml(section.title)}</h2>${rows}</section>`;
+  if (rows) {
+    return `<section class="print-section"><h2>${escapeHtml(section.title)}</h2>${rows}</section>`;
+  }
+  if (section.emptyPrintText) {
+    return `<section class="print-section"><h2>${escapeHtml(section.title)}</h2><div class="print-row"><span class="print-value">${escapeHtml(section.emptyPrintText)}</span></div></section>`;
+  }
+  return '';
 }
 
 // Patient identity vs. this-visit details — confirmed grouping for the
