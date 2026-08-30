@@ -88,6 +88,21 @@ function renderSectionHtml(section) {
   return '';
 }
 
+// Same count renderSectionHtml would actually print: the section's own
+// heading (1 row) plus either its field rows or a single emptyPrintText
+// fallback row. Used to balance the two Findings columns by hand below —
+// CSS column-count is deliberately avoided here; it collapses to a single
+// column specifically during the real print/PDF pass in WebKit (Safari/iOS),
+// even though it renders correctly on screen and in the interactive print
+// preview (WebKit bugs 122214 and 156300).
+function printableRowCount(section) {
+  const fieldRows = section.fields.filter(
+    (field) => isFieldVisible(field) && shouldPrintField(field)
+  ).length;
+  if (fieldRows > 0) return fieldRows + 1;
+  return section.emptyPrintText ? 2 : 0;
+}
+
 // Patient identity vs. this-visit details — confirmed grouping for the
 // Demographics section's two print columns.
 const DEMOGRAPHICS_LEFT_IDS = ['lastName', 'firstName', 'patientId', 'dob', 'age', 'sex', 'sexOther'];
@@ -132,18 +147,37 @@ export function openPrintView(schema) {
   const demographicsHtml = demographicsSection ? renderDemographicsHtml(demographicsSection) : '';
   const interpretationHtml = hasInterpretation ? renderSectionHtml(interpretationSection) : '';
   const topHtml = demographicsHtml + interpretationHtml;
-  const columnsHtml = otherSections.map(renderSectionHtml).join('');
   const commentsHtml = commentsSection ? renderSectionHtml(commentsSection) : '';
+
+  // Greedy balance: walk Findings sections in schema order, always adding the
+  // next one to whichever column currently has fewer accumulated rows. Kept
+  // deterministic (no CSS reflow) so both columns render reliably in print.
+  let leftRows = 0;
+  let rightRows = 0;
+  const leftSectionsHtml = [];
+  const rightSectionsHtml = [];
+  for (const section of otherSections) {
+    const html = renderSectionHtml(section);
+    if (!html) continue;
+    const rows = printableRowCount(section);
+    if (leftRows <= rightRows) {
+      leftSectionsHtml.push(html);
+      leftRows += rows;
+    } else {
+      rightSectionsHtml.push(html);
+      rightRows += rows;
+    }
+  }
+  const columnsHtml =
+    leftSectionsHtml.length || rightSectionsHtml.length
+      ? `<div class="print-columns"><div class="print-col">${leftSectionsHtml.join('')}</div><div class="print-col">${rightSectionsHtml.join('')}</div></div>`
+      : '';
 
   // Blocks are joined with a divider only where two real blocks meet, so an
   // empty Findings or Comments section never leaves a stray trailing rule.
   const blocks = [];
   if (topHtml) blocks.push(`<div class="print-fullwidth">${topHtml}</div>`);
-  if (columnsHtml) {
-    blocks.push(
-      `<h2 class="print-group-title">Findings</h2><div class="print-columns">${columnsHtml}</div>`
-    );
-  }
+  if (columnsHtml) blocks.push(`<h2 class="print-group-title">Findings</h2>${columnsHtml}`);
   if (commentsHtml) blocks.push(`<div class="print-fullwidth">${commentsHtml}</div>`);
   const bodyHtml = blocks.join('<hr class="print-divider">');
 
@@ -175,14 +209,15 @@ export function openPrintView(schema) {
   }
   .demographics-columns { display: flex; gap: 1.1rem; }
   .demographics-col { flex: 1; min-width: 0; }
-  .print-columns {
-    column-count: 2;
-    column-gap: 1.1rem;
-  }
+  /* Deliberately flexbox, not CSS column-count: WebKit's print/PDF engine
+     collapses multicol layouts to a single column during the actual print
+     pass even though they render fine on screen (WebKit bugs 122214, 156300).
+     Sections are pre-split into two explicit columns in JS instead. */
+  .print-columns { display: flex; gap: 1.1rem; }
+  .print-col { flex: 1; min-width: 0; }
   .print-section {
     margin-bottom: 0.5rem;
     break-inside: avoid;
-    -webkit-column-break-inside: avoid;
     page-break-inside: avoid;
   }
   .print-section h2 {
