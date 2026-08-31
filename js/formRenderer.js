@@ -34,6 +34,7 @@ function renderSelect(field) {
   for (const opt of field.options) {
     select.appendChild(el('option', { value: opt, text: opt }));
   }
+  if (field.defaultValue !== undefined) select.value = field.defaultValue;
   const label = el('label', { for: field.id, text: labelText(field) });
   return el('div', { class: 'field' }, [label, select]);
 }

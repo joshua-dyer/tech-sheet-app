@@ -60,13 +60,6 @@ added later (~15 total, 8 common).
   auto-close after printing) so the tech can visually review for errors
   before closing it or saving.
 
-### Print Layout Reordering
-- If the Physician Interpretation field has content, it is rendered
-  directly under the Demographics section, followed by all remaining
-  findings/comments data
-- If Physician Interpretation is empty (only Technologist Comments is
-  filled), the print layout keeps the original on-screen field order
-
 ### Clear Button
 - Empties all fields on the current sheet
 - Gated behind a custom confirmation modal (styled to match the app's
@@ -75,6 +68,37 @@ added later (~15 total, 8 common).
 - Built as a reusable function: switching to a different tech sheet
   type (future phase) will call this same clear behavior before loading
   the new sheet
+
+### Physician Interpretation Section
+
+- A checkbox/toggle enables the Physician Interpretation section on the
+  entry screen (always visible/editable regardless of checkbox state)
+- When enabled, reveals:
+  - A physician name dropdown, defaulting to "Other - enter manually"
+    on load (since no names are pre-populated yet) — selecting this
+    option reveals a text field for manual entry. The dropdown list
+    itself should be built from a simple array/list structure so
+    specific physician names can be added later without restructuring
+  - A text field for the Physician's Impression content
+- Print behavior:
+  - Only affects the PRINT output — Technologist Comments remains fully
+    visible/editable on the entry screen at all times
+  - If the checkbox is checked, Technologist Comments is suppressed
+    from print entirely, and the Physician Interpretation section is
+    shown in its place — even if the impression text is blank (this is
+    intentional: an empty section signals to the tech that something
+    was missed)
+  - The Physician Interpretation section is positioned at the top of
+    the print output, directly below Demographics and before the
+    Ultrasound Findings section
+  - The physician's name (selected or manually entered) prints as part
+    of this section
+  - Below the impression text, with clear visual spacing (not crammed
+    against the text), include a signature line, with the physician's
+    name printed just beneath it — a standard signature block
+  - If the checkbox is unchecked, print output is unchanged from
+    current behavior (Technologist Comments appears in its normal
+    position)
 
 ## 7. Diagram Markup Feature (Thyroid, Carotid, Arterial sheets)
 

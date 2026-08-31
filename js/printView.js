@@ -1,3 +1,5 @@
+import { OTHER_PHYSICIAN_OPTION } from '../data/physicians.js';
+
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -130,6 +132,28 @@ function renderDemographicsHtml(section) {
   return `<section class="print-section"><h2>${escapeHtml(section.title)}</h2><div class="demographics-columns"><div class="demographics-col">${leftHtml}</div><div class="demographics-col">${rightHtml}</div></div></section>`;
 }
 
+// Bespoke rather than the generic field-row renderer: this section always
+// prints when the toggle is on — even with an empty impression, which is
+// intentional (it flags that a review may have been missed) — and needs the
+// signature-block layout (line + printed name) rather than label:value rows.
+function renderInterpretationHtml(section) {
+  const physicianField = section.fields.find((f) => f.id === 'interpretationPhysician');
+  const physicianOtherField = section.fields.find((f) => f.id === 'interpretationPhysicianOther');
+  const impressionField = section.fields.find((f) => f.id === 'interpretationText');
+
+  const selectedPhysician = physicianField ? getDisplayValue(physicianField) : '';
+  const physicianName =
+    selectedPhysician === OTHER_PHYSICIAN_OPTION
+      ? physicianOtherField
+        ? getDisplayValue(physicianOtherField)
+        : ''
+      : selectedPhysician;
+
+  const impressionText = impressionField ? getDisplayValue(impressionField) : '';
+
+  return `<section class="print-section print-interpretation"><h2>${escapeHtml(section.title)}</h2><div class="interpretation-impression">${escapeHtml(impressionText)}</div><div class="signature-block"><div class="signature-line"></div><div class="signature-name">${escapeHtml(physicianName || '—')}</div></div></section>`;
+}
+
 export function openPrintView(schema) {
   const demographicsSection = schema.sections.find((s) => s.id === 'demographics');
   const interpretationSection = schema.sections.find((s) => s.id === 'interpretation');
@@ -138,16 +162,26 @@ export function openPrintView(schema) {
     (s) => s.id !== 'demographics' && s.id !== 'interpretation' && s.id !== 'comments'
   );
 
-  const interpretationField = interpretationSection?.fields.find((f) => f.type === 'textarea');
-  const hasInterpretation = interpretationField ? Boolean(getDisplayValue(interpretationField)) : false;
+  const toggleField = interpretationSection?.fields.find((f) => f.id === 'interpretationToggle');
+  const interpretationEnabled = toggleField ? getDisplayValue(toggleField) === 'Yes' : false;
 
-  // Demographics (and Interpretation, when present) run full-width up top;
-  // the findings sections in between flow into two dense columns; Technologist
-  // Comments always trails as its own full-width section at the very end.
+  // A signed Physician Interpretation makes this a report rather than a
+  // blank working sheet, so the heading reflects that — only when enabled.
+  const heading = `${schema.title} — ${interpretationEnabled ? 'Report' : 'Tech Sheet'}`;
+
+  // Demographics (and Interpretation, when its toggle is on) run full-width up
+  // top; the findings sections in between flow into two dense columns.
+  // Technologist Comments trails as its own full-width block — unless
+  // Physician Interpretation is enabled, in which case it takes that spot
+  // instead and Comments is suppressed entirely, regardless of its content.
   const demographicsHtml = demographicsSection ? renderDemographicsHtml(demographicsSection) : '';
-  const interpretationHtml = hasInterpretation ? renderSectionHtml(interpretationSection) : '';
-  const topHtml = demographicsHtml + interpretationHtml;
-  const commentsHtml = commentsSection ? renderSectionHtml(commentsSection) : '';
+  const interpretationHtml = interpretationEnabled ? renderInterpretationHtml(interpretationSection) : '';
+  const topHtml = [demographicsHtml, interpretationHtml].filter(Boolean).join('<hr class="print-divider">');
+  const commentsHtml = interpretationEnabled
+    ? ''
+    : commentsSection
+      ? renderSectionHtml(commentsSection)
+      : '';
 
   // Greedy balance: walk Findings sections in schema order, always adding the
   // next one to whichever column currently has fewer accumulated rows. Kept
@@ -232,13 +266,17 @@ export function openPrintView(schema) {
   .print-label { font-weight: 600; flex: 0 0 auto; }
   .print-label::after { content: ':'; }
   .print-value { white-space: pre-wrap; }
+  .interpretation-impression { white-space: pre-wrap; min-height: 3em; margin: 0.4rem 0 1.2rem; }
+  .signature-block { margin-top: 1.5rem; }
+  .signature-line { width: 260px; border-top: 1px solid #333; margin-bottom: 0.2rem; }
+  .signature-name { font-size: 0.85rem; }
   @media print {
     body { margin: 0.35in; }
   }
 </style>
 </head>
 <body>
-<h1>${escapeHtml(schema.title)} — Tech Sheet</h1>
+<h1>${escapeHtml(heading)}</h1>
 ${bodyHtml}
 </body>
 </html>`;

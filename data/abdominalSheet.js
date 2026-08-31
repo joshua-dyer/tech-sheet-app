@@ -1,3 +1,5 @@
+import { PHYSICIAN_NAMES, OTHER_PHYSICIAN_OPTION } from './physicians.js';
+
 export const abdominalSheet = {
   id: 'abdominal',
   title: 'Abdominal Ultrasound',
@@ -204,11 +206,32 @@ export const abdominalSheet = {
           id: 'interpretationToggle',
           label: 'Include Physician Interpretation',
           type: 'checkbox',
-          reveal: { targetIds: ['interpretationText'], condition: (value) => value === true },
+          reveal: {
+            targetIds: ['interpretationPhysician', 'interpretationText'],
+            condition: (value) => value === true,
+          },
+        },
+        {
+          id: 'interpretationPhysician',
+          label: 'Physician Name',
+          type: 'select',
+          options: [...PHYSICIAN_NAMES, OTHER_PHYSICIAN_OPTION],
+          defaultValue: OTHER_PHYSICIAN_OPTION,
+          hiddenByDefault: true,
+          reveal: {
+            targetIds: ['interpretationPhysicianOther'],
+            condition: (value) => value === OTHER_PHYSICIAN_OPTION,
+          },
+        },
+        {
+          id: 'interpretationPhysicianOther',
+          label: "Enter Physician's Name",
+          type: 'text',
+          hiddenByDefault: true,
         },
         {
           id: 'interpretationText',
-          label: 'Physician Interpretation',
+          label: "Physician's Impression",
           type: 'textarea',
           large: true,
           hiddenByDefault: true,

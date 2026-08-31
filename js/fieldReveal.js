@@ -28,12 +28,24 @@ export function hideElement(wrapper) {
   setTimeout(finish, 350);
 }
 
-function applyReveal(targetIds, isVisible) {
+// Reveal targets are flat siblings, not DOM-nested under their trigger, so a
+// target that itself declares a `reveal` (e.g. a dropdown defaulted to a
+// value that should already show its own dependent) needs that nested rule
+// synced right when the target becomes visible/hidden — otherwise a defaulted
+// value's dependent wouldn't appear until the user touched the field once,
+// and hiding a branch could leave one of its own targets orphaned visible.
+function applyReveal(targetIds, isVisible, fieldsById) {
   for (const targetId of targetIds) {
     const wrapper = document.getElementById(`field-wrap-${targetId}`);
-    if (!wrapper) continue;
-    if (isVisible) revealElement(wrapper);
-    else hideElement(wrapper);
+    if (wrapper) {
+      if (isVisible) revealElement(wrapper);
+      else hideElement(wrapper);
+    }
+
+    const field = fieldsById.get(targetId);
+    if (!field?.reveal) continue;
+    const nestedVisible = isVisible && field.reveal.condition(getFieldValue(field));
+    applyReveal(field.reveal.targetIds, nestedVisible, fieldsById);
   }
 }
 
@@ -55,8 +67,9 @@ function getFieldValue(field) {
   }
 }
 
-function wireFieldReveal(field) {
-  const evaluate = () => applyReveal(field.reveal.targetIds, field.reveal.condition(getFieldValue(field)));
+function wireFieldReveal(field, fieldsById) {
+  const evaluate = () =>
+    applyReveal(field.reveal.targetIds, field.reveal.condition(getFieldValue(field)), fieldsById);
   const eventName = REVEAL_EVENT_BY_TYPE[field.type];
 
   if (field.type === 'radio') {
@@ -68,10 +81,10 @@ function wireFieldReveal(field) {
   }
 }
 
-function wireGroupReveal(group) {
+function wireGroupReveal(group, fieldsById) {
   const evaluate = () => {
     const values = group.triggerFieldIds.map((id) => document.getElementById(id)?.value ?? '');
-    applyReveal(group.targetIds, group.condition(values));
+    applyReveal(group.targetIds, group.condition(values), fieldsById);
   };
   for (const id of group.triggerFieldIds) {
     document.getElementById(id)?.addEventListener('blur', evaluate);
@@ -79,10 +92,13 @@ function wireGroupReveal(group) {
 }
 
 export function initReveals(schema) {
-  for (const field of flattenFields(schema)) {
-    if (field.reveal) wireFieldReveal(field);
+  const fields = flattenFields(schema);
+  const fieldsById = new Map(fields.map((field) => [field.id, field]));
+
+  for (const field of fields) {
+    if (field.reveal) wireFieldReveal(field, fieldsById);
   }
   for (const group of schema.groupReveals || []) {
-    wireGroupReveal(group);
+    wireGroupReveal(group, fieldsById);
   }
 }
