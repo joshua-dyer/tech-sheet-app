@@ -1,60 +1,5 @@
 import { OTHER_PHYSICIAN_OPTION } from '../data/physicians.js';
-
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function getDisplayValue(field) {
-  switch (field.type) {
-    case 'text':
-    case 'number':
-    case 'date':
-    case 'textarea': {
-      const el = document.getElementById(field.id);
-      return el ? el.value.trim() : '';
-    }
-    case 'select': {
-      const el = document.getElementById(field.id);
-      return el ? el.value : '';
-    }
-    case 'radio': {
-      const checked = document.querySelector(`input[name="${field.id}"]:checked`);
-      return checked ? checked.value : '';
-    }
-    case 'checkbox': {
-      const el = document.getElementById(field.id);
-      return el && el.checked ? 'Yes' : '';
-    }
-    case 'checkbox-group': {
-      const checked = document.querySelectorAll(`input[name="${field.id}"]:checked`);
-      return Array.from(checked)
-        .map((input) => input.value)
-        .join(', ');
-    }
-    case 'computed': {
-      const el = document.getElementById(field.id);
-      return el ? el.textContent.trim() : '';
-    }
-    default:
-      return '';
-  }
-}
-
-function isFieldVisible(field) {
-  if (!field.hiddenByDefault) return true;
-  const wrapper = document.getElementById(`field-wrap-${field.id}`);
-  return wrapper ? !wrapper.hidden : false;
-}
-
-function hasValue(field) {
-  const value = getDisplayValue(field);
-  return value !== '' && value !== '—';
-}
+import { escapeHtml, getDisplayValue, isFieldVisible, hasValue } from './printHelpers.js';
 
 // A field prints if it has a value, or if it defines emptyPrintText — a
 // non-diagnostic placeholder (e.g. Gallbladder's "No abnormalities noted")
@@ -75,8 +20,15 @@ function renderFieldRow(field) {
 // Returns '' (and is skipped entirely) when nothing in the section was ever
 // filled in or triggered, so blank sections don't waste printed space —
 // unless the section defines emptyPrintText (e.g. Pancreas), in which case
-// that non-diagnostic placeholder prints in place of the omitted section.
+// that non-diagnostic placeholder prints in place of the omitted section. A
+// section can set `printRender(section)` to fully replace this generic
+// rendering with bespoke markup (e.g. Abdominal's Gallbladder/Murphy's Sign
+// logic, defined in that sheet's own data file, not here) — this is the
+// extension point sheet-specific print quirks should use instead of adding
+// another section-id special-case to this shared engine.
 function renderSectionHtml(section) {
+  if (section.printRender) return section.printRender(section);
+
   const rows = section.fields
     .filter((field) => isFieldVisible(field) && shouldPrintField(field))
     .map(renderFieldRow)
@@ -96,8 +48,12 @@ function renderSectionHtml(section) {
 // CSS column-count is deliberately avoided here; it collapses to a single
 // column specifically during the real print/PDF pass in WebKit (Safari/iOS),
 // even though it renders correctly on screen and in the interactive print
-// preview (WebKit bugs 122214 and 156300).
+// preview (WebKit bugs 122214 and 156300). A section with a bespoke
+// `printRender` should also set `printRowCount` — the generic field-counting
+// below doesn't know how many rows a custom renderer actually produces.
 function printableRowCount(section) {
+  if (section.printRowCount) return section.printRowCount(section);
+
   const fieldRows = section.fields.filter(
     (field) => isFieldVisible(field) && shouldPrintField(field)
   ).length;
@@ -106,7 +62,9 @@ function printableRowCount(section) {
 }
 
 // Patient identity vs. this-visit details — confirmed grouping for the
-// Demographics section's two print columns.
+// Demographics section's two print columns. Demographics is a shared section
+// (see data/demographicsSection.js) reused by every sheet, so this grouping
+// applies generically, not just to Abdominal.
 const DEMOGRAPHICS_LEFT_IDS = ['lastName', 'firstName', 'patientId', 'dob', 'age', 'sex', 'sexOther'];
 const DEMOGRAPHICS_RIGHT_IDS = ['examDate', 'orderingPhysician', 'indications', 'priorStudy', 'priorStudyDetail'];
 
@@ -136,6 +94,9 @@ function renderDemographicsHtml(section) {
 // prints when the toggle is on — even with an empty impression, which is
 // intentional (it flags that a review may have been missed) — and needs the
 // signature-block layout (line + printed name) rather than label:value rows.
+// Physician Interpretation is a shared section (data/interpretationSection.js)
+// reused by every sheet, so this stays generic here rather than living in a
+// per-sheet data file the way Abdominal's Gallbladder printRender does.
 function renderInterpretationHtml(section) {
   const physicianField = section.fields.find((f) => f.id === 'interpretationPhysician');
   const physicianOtherField = section.fields.find((f) => f.id === 'interpretationPhysicianOther');

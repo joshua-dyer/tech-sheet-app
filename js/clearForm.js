@@ -1,4 +1,32 @@
 import { flattenFields } from './formRenderer.js';
+import { getDisplayValue } from './printHelpers.js';
+import { showConfirmModal } from './confirmModal.js';
+
+let initialSnapshot = null;
+
+// Reuses getDisplayValue — the same per-field reader the print feature
+// already uses — rather than field-by-field "is this empty" logic, which
+// previously misfired on fields with a non-blank default value (e.g. the
+// Physician Name dropdown defaults to "Other - enter manually") even on a
+// freshly loaded page nobody had touched yet.
+function captureSnapshot(schema) {
+  const values = {};
+  for (const field of flattenFields(schema)) {
+    values[field.id] = getDisplayValue(field);
+  }
+  return JSON.stringify(values);
+}
+
+// Called once, right after the sheet renders, so later comparisons are
+// against the true as-loaded state (including any field defaultValues).
+export function recordInitialState(schema) {
+  initialSnapshot = captureSnapshot(schema);
+}
+
+export function hasUnsavedChanges(schema) {
+  if (initialSnapshot === null) return false;
+  return captureSnapshot(schema) !== initialSnapshot;
+}
 
 export function clearSheet(schema) {
   for (const field of flattenFields(schema)) {
@@ -45,48 +73,19 @@ export function clearSheet(schema) {
 
 export function initClearButton(schema) {
   const clearBtn = document.getElementById('clearBtn');
-  const modal = document.getElementById('confirmModal');
-  const cancelBtn = document.getElementById('modalCancel');
-  const confirmBtn = document.getElementById('modalConfirm');
-  if (!clearBtn || !modal || !cancelBtn || !confirmBtn) return;
+  if (!clearBtn) return;
 
-  let lastFocused = null;
-
-  const trapFocus = (event) => {
-    if (event.key === 'Escape') {
-      closeModal();
-      return;
-    }
-    if (event.key !== 'Tab') return;
-    const focusable = modal.querySelectorAll('button');
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  };
-
-  function openModal() {
-    lastFocused = document.activeElement;
-    modal.hidden = false;
-    confirmBtn.focus();
-    document.addEventListener('keydown', trapFocus);
-  }
-
-  function closeModal() {
-    modal.hidden = true;
-    document.removeEventListener('keydown', trapFocus);
-    if (lastFocused instanceof HTMLElement) lastFocused.focus();
-  }
-
-  clearBtn.addEventListener('click', openModal);
-  cancelBtn.addEventListener('click', closeModal);
-  confirmBtn.addEventListener('click', () => {
-    clearSheet(schema);
-    closeModal();
+  clearBtn.addEventListener('click', () => {
+    showConfirmModal({
+      title: 'Clear this sheet?',
+      message: 'This will erase all entered data on this tech sheet. This cannot be undone.',
+      confirmLabel: 'Clear Sheet',
+      onConfirm: () => {
+        clearSheet(schema);
+        // The just-cleared state becomes the new baseline, so navigating
+        // away right after Clear doesn't still warn about "unsaved" data.
+        recordInitialState(schema);
+      },
+    });
   });
 }

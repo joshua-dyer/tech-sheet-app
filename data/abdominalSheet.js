@@ -1,52 +1,34 @@
-import { PHYSICIAN_NAMES, OTHER_PHYSICIAN_OPTION } from './physicians.js';
+import { demographicsSection } from './demographicsSection.js';
+import { commentsSection } from './commentsSection.js';
+import { interpretationSection } from './interpretationSection.js';
+import { escapeHtml, getCheckedGroupValues } from '../js/printHelpers.js';
+
+const POSITIVE_MURPHY_OPTION = "Positive Murphy's Sign";
+const NEGATIVE_MURPHY_TEXT = "Negative Murphy's Sign";
+
+// Murphy's Sign is folded into the Gallbladder checkbox-group rather than its
+// own section, so it needs bespoke print logic instead of the plain
+// checked-or-not summary the generic renderer gives every other
+// checkbox-group: a positive reading is itself an abnormal finding, so it
+// prints as-is with no "No abnormalities noted" fallback; a negative reading
+// always appends "Negative Murphy's Sign" — even when nothing else is
+// checked, in which case it follows the emptyPrintText fallback instead.
+function renderGallbladderPrint(section) {
+  const findingsField = section.fields.find((f) => f.id === 'gallbladderFindings');
+  const checked = getCheckedGroupValues(findingsField);
+  const isPositive = checked.includes(POSITIVE_MURPHY_OPTION);
+  const value = isPositive
+    ? checked.join(', ')
+    : `${checked.length > 0 ? checked.join(', ') : findingsField.emptyPrintText}, ${NEGATIVE_MURPHY_TEXT}`;
+
+  return `<section class="print-section"><h2>${escapeHtml(section.title)}</h2><div class="print-row"><span class="print-label">${escapeHtml(findingsField.label)}</span><span class="print-value">${escapeHtml(value)}</span></div></section>`;
+}
 
 export const abdominalSheet = {
   id: 'abdominal',
   title: 'Abdominal Ultrasound',
   sections: [
-    {
-      id: 'demographics',
-      title: 'Demographics',
-      fields: [
-        { id: 'lastName', label: 'Last Name', type: 'text' },
-        { id: 'firstName', label: 'First Name', type: 'text' },
-        { id: 'patientId', label: 'ID', type: 'text' },
-        { id: 'examDate', label: 'Date of Exam', type: 'date' },
-        { id: 'dob', label: 'Date of Birth', type: 'date' },
-        {
-          id: 'sex',
-          label: 'Sex',
-          type: 'select',
-          options: [
-            'Male',
-            'Female',
-            'Non-binary',
-            'Transgender Male',
-            'Transgender Female',
-            'Choose not to identify',
-            'Other',
-          ],
-          reveal: { targetIds: ['sexOther'], condition: (value) => value === 'Other' },
-        },
-        { id: 'sexOther', label: 'Please specify', type: 'text', hiddenByDefault: true },
-        { id: 'age', label: 'Age', type: 'computed' },
-        { id: 'orderingPhysician', label: 'Ordering Physician', type: 'text' },
-        { id: 'indications', label: 'Indications', type: 'text' },
-        {
-          id: 'priorStudy',
-          label: 'Prior Study',
-          type: 'radio',
-          options: ['Yes', 'No'],
-          reveal: { targetIds: ['priorStudyDetail'], condition: (value) => value === 'Yes' },
-        },
-        {
-          id: 'priorStudyDetail',
-          label: 'Prior Study Date',
-          type: 'date',
-          hiddenByDefault: true,
-        },
-      ],
-    },
+    demographicsSection,
     {
       id: 'aorta',
       title: 'Abd. Aorta',
@@ -84,19 +66,22 @@ export const abdominalSheet = {
           id: 'gallbladderFindings',
           label: 'Findings',
           type: 'checkbox-group',
-          options: ['Stones', 'Sludge', 'Wall Thickening', 'Pericholecystic Fluid'],
+          options: [
+            'Stones',
+            'Sludge',
+            'Wall Thickening',
+            'Pericholecystic Fluid',
+            "Positive Murphy's Sign",
+          ],
           // Reflects that the technologist didn't flag anything — not a
-          // clinical assertion, which remains the physician's call.
+          // clinical assertion, which remains the physician's call. Print
+          // logic for this field also appends/negates Murphy's Sign — see
+          // this section's printRender below.
           emptyPrintText: 'No abnormalities noted',
         },
       ],
-    },
-    {
-      id: 'murphy',
-      title: "Murphy's Sign",
-      fields: [
-        { id: 'murphySign', label: "Murphy's Sign", type: 'radio', options: ['Positive', 'Negative'] },
-      ],
+      printRender: renderGallbladderPrint,
+      printRowCount: () => 2,
     },
     {
       id: 'portalVein',
@@ -182,62 +167,8 @@ export const abdominalSheet = {
       title: 'Other',
       fields: [{ id: 'otherFindings', label: 'Other Findings', type: 'textarea' }],
     },
-    {
-      id: 'comments',
-      title: 'Technologist Comments',
-      fields: [
-        // Auto-population from measurement thresholds (Liver >16.5cm, Kidney
-        // Cortex <1.3cm, Spleen ≥13cm) is planned for Phase 2 — not implemented yet.
-        {
-          id: 'comments',
-          label: 'Technologist Comments',
-          type: 'textarea',
-          large: true,
-          // Section already has this exact title as its print heading.
-          omitPrintLabel: true,
-        },
-      ],
-    },
-    {
-      id: 'interpretation',
-      title: 'Physician Interpretation',
-      fields: [
-        {
-          id: 'interpretationToggle',
-          label: 'Include Physician Interpretation',
-          type: 'checkbox',
-          reveal: {
-            targetIds: ['interpretationPhysician', 'interpretationText'],
-            condition: (value) => value === true,
-          },
-        },
-        {
-          id: 'interpretationPhysician',
-          label: 'Physician Name',
-          type: 'select',
-          options: [...PHYSICIAN_NAMES, OTHER_PHYSICIAN_OPTION],
-          defaultValue: OTHER_PHYSICIAN_OPTION,
-          hiddenByDefault: true,
-          reveal: {
-            targetIds: ['interpretationPhysicianOther'],
-            condition: (value) => value === OTHER_PHYSICIAN_OPTION,
-          },
-        },
-        {
-          id: 'interpretationPhysicianOther',
-          label: "Enter Physician's Name",
-          type: 'text',
-          hiddenByDefault: true,
-        },
-        {
-          id: 'interpretationText',
-          label: "Physician's Impression",
-          type: 'textarea',
-          large: true,
-          hiddenByDefault: true,
-        },
-      ],
-    },
+    commentsSection,
+    interpretationSection,
   ],
   groupReveals: [
     {
