@@ -1,6 +1,8 @@
 import { flattenFields } from './formRenderer.js';
 import { getDisplayValue } from './printHelpers.js';
 import { showConfirmModal } from './confirmModal.js';
+import { resetDiagram } from './diagramMarkup.js';
+import { resetDynamicTable } from './dynamicTable.js';
 
 let initialSnapshot = null;
 
@@ -57,6 +59,12 @@ export function clearSheet(schema) {
         if (outputEl) outputEl.textContent = '—';
         break;
       }
+      case 'diagram':
+        resetDiagram(field.id);
+        break;
+      case 'dynamic-table':
+        resetDynamicTable(field.id);
+        break;
       default:
         break;
     }

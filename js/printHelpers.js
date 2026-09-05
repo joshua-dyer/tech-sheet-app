@@ -24,7 +24,13 @@ export function getDisplayValue(field) {
     case 'text':
     case 'number':
     case 'date':
-    case 'textarea': {
+    case 'textarea':
+    // Both mirror their real state into a hidden input with this same id
+    // (see js/diagramMarkup.js / js/dynamicTable.js) purely so these
+    // non-standard widgets can be read here identically to a text field —
+    // print itself reads their live DOM directly, not this hidden mirror.
+    case 'diagram':
+    case 'dynamic-table': {
       const el = document.getElementById(field.id);
       return el ? el.value.trim() : '';
     }

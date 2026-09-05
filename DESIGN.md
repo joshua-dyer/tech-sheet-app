@@ -197,6 +197,10 @@ it.
   since many sites keep these as PDFs/digital images rather than
   printing on paper, and the red is functionally important for
   visibility, not decorative
+- Diagrams always print, regardless of whether any strokes were drawn. An unmarked diagram is clinically meaningful (confirms the area was
+  evaluated with nothing to flag), unlike the Nodule Table, which is
+  omitted when empty since it has no equivalent "nothing to report"
+  meaning on its own.
 
 ## 9. Thyroid Sheet — Fields & Scoring
 

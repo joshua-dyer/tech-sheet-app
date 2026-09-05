@@ -27,7 +27,27 @@ export const demographicsSection = {
       reveal: { targetIds: ['sexOther'], condition: (value) => value === 'Other' },
     },
     { id: 'sexOther', label: 'Please specify', type: 'text', hiddenByDefault: true },
-    { id: 'age', label: 'Age', type: 'computed' },
+    {
+      id: 'age',
+      label: 'Age',
+      type: 'computed',
+      compute: {
+        dependsOn: ['dob', 'examDate'],
+        formula: (dobStr, examDateStr) => {
+          const dob = dobStr ? new Date(dobStr) : null;
+          const examDate = examDateStr ? new Date(examDateStr) : null;
+          if (!dob || !examDate || Number.isNaN(dob.getTime()) || Number.isNaN(examDate.getTime())) {
+            return null;
+          }
+          let age = examDate.getUTCFullYear() - dob.getUTCFullYear();
+          const hadBirthdayByExam =
+            examDate.getUTCMonth() > dob.getUTCMonth() ||
+            (examDate.getUTCMonth() === dob.getUTCMonth() && examDate.getUTCDate() >= dob.getUTCDate());
+          if (!hadBirthdayByExam) age -= 1;
+          return age >= 0 ? String(age) : null;
+        },
+      },
+    },
     { id: 'orderingPhysician', label: 'Ordering Physician', type: 'text' },
     { id: 'indications', label: 'Indications', type: 'text' },
     {

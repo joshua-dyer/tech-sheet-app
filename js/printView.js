@@ -3,13 +3,32 @@ import { escapeHtml, getDisplayValue, isFieldVisible, hasValue } from './printHe
 
 // A field prints if it has a value, or if it defines emptyPrintText — a
 // non-diagnostic placeholder (e.g. Gallbladder's "No abnormalities noted")
-// standing in for "the technologist checked, nothing was flagged".
+// standing in for "the technologist checked, nothing was flagged". A diagram
+// always prints — an unmarked reference image is still meaningful context,
+// the same reasoning behind emptyPrintText fallbacks elsewhere.
 function shouldPrintField(field) {
+  if (field.type === 'diagram') return true;
   return hasValue(field) || Boolean(field.emptyPrintText);
 }
 
+// Flattens the diagram's live canvas (base image + strokes) into a static
+// image via toDataURL — per DESIGN.md §8, print must preserve the red marks,
+// not just the reference image.
+function renderDiagramRow(field) {
+  const canvas = document.getElementById(`diagram-canvas-${field.id}`);
+  if (!canvas) return '';
+  const dataUrl = canvas.toDataURL('image/png');
+  return `<div class="print-diagram-row"><div class="print-label">${escapeHtml(field.label)}</div><img class="print-diagram-image" src="${dataUrl}" alt="${escapeHtml(field.label)}"></div>`;
+}
+
 function renderFieldRow(field) {
-  const value = hasValue(field) ? getDisplayValue(field) : field.emptyPrintText;
+  if (field.type === 'diagram') return renderDiagramRow(field);
+
+  // A checkbox can override its printed text when checked (e.g. "Hypervascularity
+  // noted" instead of "Hypervascularity: Yes") — analogous to emptyPrintText,
+  // just for the checked case instead of the empty one.
+  const checkedOverride = field.type === 'checkbox' && hasValue(field) ? field.checkedPrintText : undefined;
+  const value = checkedOverride ?? (hasValue(field) ? getDisplayValue(field) : field.emptyPrintText);
   if (field.omitPrintLabel) {
     return `<div class="print-row"><span class="print-value">${escapeHtml(value)}</span></div>`;
   }
@@ -122,6 +141,11 @@ export function openPrintView(schema) {
   const otherSections = schema.sections.filter(
     (s) => s.id !== 'demographics' && s.id !== 'interpretation' && s.id !== 'comments'
   );
+  // A section opts into full page width (a wide table, a diagram image) via
+  // `fullWidthPrint` rather than this shared engine hardcoding section ids —
+  // any future sheet's own wide content can use the same mechanism.
+  const columnSections = otherSections.filter((s) => !s.fullWidthPrint);
+  const fullWidthFindingsSections = otherSections.filter((s) => s.fullWidthPrint);
 
   const toggleField = interpretationSection?.fields.find((f) => f.id === 'interpretationToggle');
   const interpretationEnabled = toggleField ? getDisplayValue(toggleField) === 'Yes' : false;
@@ -151,7 +175,7 @@ export function openPrintView(schema) {
   let rightRows = 0;
   const leftSectionsHtml = [];
   const rightSectionsHtml = [];
-  for (const section of otherSections) {
+  for (const section of columnSections) {
     const html = renderSectionHtml(section);
     if (!html) continue;
     const rows = printableRowCount(section);
@@ -168,11 +192,14 @@ export function openPrintView(schema) {
       ? `<div class="print-columns"><div class="print-col">${leftSectionsHtml.join('')}</div><div class="print-col">${rightSectionsHtml.join('')}</div></div>`
       : '';
 
+  const fullWidthFindingsHtml = fullWidthFindingsSections.map(renderSectionHtml).filter(Boolean);
+
   // Blocks are joined with a divider only where two real blocks meet, so an
   // empty Findings or Comments section never leaves a stray trailing rule.
   const blocks = [];
   if (topHtml) blocks.push(`<div class="print-fullwidth">${topHtml}</div>`);
   if (columnsHtml) blocks.push(`<h2 class="print-group-title">Findings</h2>${columnsHtml}`);
+  for (const html of fullWidthFindingsHtml) blocks.push(`<div class="print-fullwidth">${html}</div>`);
   if (commentsHtml) blocks.push(`<div class="print-fullwidth">${commentsHtml}</div>`);
   const bodyHtml = blocks.join('<hr class="print-divider">');
 
@@ -183,6 +210,11 @@ export function openPrintView(schema) {
 <title>${escapeHtml(schema.title)} — Print</title>
 <style>
   * { box-sizing: border-box; }
+  /* Controls every rem-sized measurement below from one place — applies to
+     every sheet's printout (this template is shared, not per-sheet) and is
+     the main lever for fitting more content per page without hand-tuning
+     each individual font-size/spacing rule. */
+  html { font-size: 14px; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     color: #1a1a1a;
@@ -231,6 +263,15 @@ export function openPrintView(schema) {
   .signature-block { margin-top: 1.5rem; }
   .signature-line { width: 260px; border-top: 1px solid #333; margin-bottom: 0.2rem; }
   .signature-name { font-size: 0.85rem; }
+  .print-diagram-row { margin-top: 0.3rem; }
+  .print-diagram-image { display: block; max-width: 50%; height: auto; margin: 0 auto; }
+  .print-nodule-grid { width: 100%; border-collapse: collapse; margin-top: 0.3rem; }
+  .print-nodule-grid th, .print-nodule-grid td {
+    border: 1px solid #999;
+    padding: 0.2rem 0.35rem;
+    text-align: left;
+    font-size: 0.78rem;
+  }
   @media print {
     body { margin: 0.35in; }
   }

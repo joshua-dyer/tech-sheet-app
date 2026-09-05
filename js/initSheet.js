@@ -1,6 +1,8 @@
 import { renderSheet } from './formRenderer.js';
 import { initReveals } from './fieldReveal.js';
-import { initAgeCalculator } from './ageCalculator.js';
+import { initComputedFields } from './computedFields.js';
+import { initDiagramMarkup } from './diagramMarkup.js';
+import { initDynamicTables } from './dynamicTable.js';
 import { initClearButton, recordInitialState } from './clearForm.js';
 import { initConfirmModal } from './confirmModal.js';
 import { initNav } from './nav.js';
@@ -16,7 +18,9 @@ export function initSheet(schema, sheetId) {
   renderSheet(schema, mount);
   recordInitialState(schema);
   initReveals(schema);
-  initAgeCalculator();
+  initComputedFields(schema);
+  initDiagramMarkup(schema);
+  initDynamicTables(schema);
   initConfirmModal();
   initClearButton(schema);
   initNav(schema, sheetId);

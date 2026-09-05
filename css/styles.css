@@ -300,3 +300,112 @@ button:focus-visible {
     flex: 1 1 auto;
   }
 }
+
+.diagram-field {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.diagram-field > legend {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  padding: 0 0 0.5rem;
+}
+
+.diagram-canvas-wrap {
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  background: #fff;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.diagram-canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  /* touch-action is toggled inline by js/diagramMarkup.js (none while
+     Enable Markup is active, default otherwise) — not set here, so a
+     disabled diagram never blocks normal touch-scrolling over it. */
+}
+
+.diagram-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.dynamic-table-field {
+  gap: 0.75rem;
+}
+
+.dynamic-table-scroll {
+  overflow-x: auto;
+}
+
+.dynamic-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 760px;
+}
+
+.dynamic-table th,
+.dynamic-table td {
+  border: 1px solid var(--input-border);
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.dynamic-table th {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dynamic-table td select,
+.dynamic-table td input[type='text'] {
+  min-width: 120px;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.85rem;
+}
+
+.dynamic-table .nodule-num,
+.dynamic-table .dt-total,
+.dynamic-table .dt-tirads {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.scoring-key {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.scoring-key-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.15rem;
+}
+
+.scoring-key-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.scoring-key-label {
+  font-weight: 600;
+  flex: 0 0 auto;
+}
+
+.scoring-key-label::after {
+  content: ':';
+}
