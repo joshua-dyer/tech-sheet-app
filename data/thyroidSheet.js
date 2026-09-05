@@ -199,6 +199,8 @@ export const thyroidSheet = {
           label: 'Thyroid Diagram',
           type: 'diagram',
           imageSrc: '/images/thyroid_diagram.png',
+          // Section heading ("Diagram") already says this — redundant inline.
+          omitPrintLabel: true,
         },
       ],
     },

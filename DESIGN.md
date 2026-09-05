@@ -281,23 +281,49 @@ TIRADS Level from Total Points:
 
 
 
+## 10. Carotid Sheet — Fields
 
-  ## 10. Explicitly Out of Scope (Phase 1)
+### Vessel Panels (Right and Left)
+- Rendered as a horizontal table (mirroring the Nodule Table's use of a
+  real <table> for column alignment), one row set per side
+- Fields per side: Subclavian, CCA (Systolic + Diastolic), ICA
+  (Systolic + Diastolic), ECA, Vertebral — all velocities in cm/s
+- Stenosis Location: dropdown (ICA / ECA / CCA / Bulb), defaults to ICA
+- % Obstruction: free text field (not strictly numeric — accommodates
+  ranges, "near occlusion," "undetectable," etc.)
+- CA/CCA Ratio: computed field using the existing computedFields
+  mechanism — formula: ICA Systolic ÷ CCA Systolic. Displays "—" if
+  either input is missing/invalid, same convention as Thyroid's Volume
+  field.
+
+### Diagram Markup
+- Uses the shared Diagram Markup feature (Section 7)
+- Image: /images/carotid_diagram.png
+- Unlike Thyroid's numbered-nodule convention, Carotid markup is
+  unconstrained freehand scribbling anywhere on or beyond the image
+  bounds — findings such as carotid body tumors may need marking
+  outside the drawn vessel anatomy
+
+### Reference Table
+- Static clinical reference (Degree of Stenosis / ICA PSV / Plaque
+  Estimate / ICA:CCA Ratio / ICA EDV), visible on-screen only, omitted
+  from print — same treatment as Thyroid's Scoring Key
+
+
+
+
+
+  ## 11. Explicitly Out of Scope (Phase 1)
 - Auto-population of Technologist Comments based on measurement values
   (Liver >16.5cm, Kidney Cortex <1.3cm, Spleen ≥13cm) — this is planned
   for Phase 2, after the visual/layout design is finalized. Do not
   implement the auto-population logic yet, but the Technologist Comments
   field should exist as a plain textarea now.
-- Physician Interpretation content/workflow
-- Additional ultrasound sheet types beyond Abdominal are not part of this
-  phase's build, but Thyroid (with the diagram markup feature from
-  Section 7) is the planned next phase, to begin after Abdominal has
-  been tested in real use.
 - Data persistence via backend/database (export is handled via the
   Print/PDF feature in Section 6, not stored anywhere at this time)
 - Any backend, database, or account system
 
-## 11. Architecture Note
+## 12. Architecture Note
 Build with reuse in mind: this is the first of ~15 planned tech sheets
 (8 common). Favor a reusable field/section component pattern over
 one-off hand-coded HTML per form, so future sheet types can be added

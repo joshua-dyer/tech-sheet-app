@@ -18,7 +18,11 @@ function renderDiagramRow(field) {
   const canvas = document.getElementById(`diagram-canvas-${field.id}`);
   if (!canvas) return '';
   const dataUrl = canvas.toDataURL('image/png');
-  return `<div class="print-diagram-row"><div class="print-label">${escapeHtml(field.label)}</div><img class="print-diagram-image" src="${dataUrl}" alt="${escapeHtml(field.label)}"></div>`;
+  // omitPrintLabel: true when the section heading already states the label
+  // (e.g. a "Diagram" section with one diagram field) — same flag other
+  // field types use for the same reason.
+  const labelHtml = field.omitPrintLabel ? '' : `<div class="print-label">${escapeHtml(field.label)}</div>`;
+  return `<div class="print-diagram-row">${labelHtml}<img class="print-diagram-image" src="${dataUrl}" alt="${escapeHtml(field.label)}"></div>`;
 }
 
 function renderFieldRow(field) {
