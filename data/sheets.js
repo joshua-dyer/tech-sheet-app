@@ -4,4 +4,5 @@
 export const SHEETS = [
   { id: 'abdominal', label: 'Abdominal', href: 'index.html' },
   { id: 'thyroid', label: 'Thyroid', href: 'thyroid.html' },
+  { id: 'carotid', label: 'Carotid', href: 'carotid.html' },
 ];

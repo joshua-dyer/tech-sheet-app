@@ -196,16 +196,30 @@ export function openPrintView(schema) {
       ? `<div class="print-columns"><div class="print-col">${leftSectionsHtml.join('')}</div><div class="print-col">${rightSectionsHtml.join('')}</div></div>`
       : '';
 
-  const fullWidthFindingsHtml = fullWidthFindingsSections.map(renderSectionHtml).filter(Boolean);
+  const fullWidthFindingsPairs = fullWidthFindingsSections
+    .map((section) => ({ section, html: renderSectionHtml(section) }))
+    .filter((pair) => pair.html);
 
   // Blocks are joined with a divider only where two real blocks meet, so an
   // empty Findings or Comments section never leaves a stray trailing rule.
   const blocks = [];
   if (topHtml) blocks.push(`<div class="print-fullwidth">${topHtml}</div>`);
   if (columnsHtml) blocks.push(`<h2 class="print-group-title">Findings</h2>${columnsHtml}`);
-  for (const html of fullWidthFindingsHtml) blocks.push(`<div class="print-fullwidth">${html}</div>`);
+  for (const { html } of fullWidthFindingsPairs) blocks.push(`<div class="print-fullwidth">${html}</div>`);
   if (commentsHtml) blocks.push(`<div class="print-fullwidth">${commentsHtml}</div>`);
-  const bodyHtml = blocks.join('<hr class="print-divider">');
+  let bodyHtml = blocks.join('<hr class="print-divider">');
+
+  // A diagram (a large image) reads as visually unfinished without a rule
+  // closing it off even when nothing happens to follow it in print — unlike
+  // a text section, which doesn't need one. The join above already inserts
+  // a divider after it whenever something *does* follow (Comments, another
+  // full-width section); this covers the one gap where it's the trailing
+  // block with nothing after it (e.g. Comments empty, or Interpretation
+  // promoted to the top instead of trailing).
+  const lastFullWidthPair = fullWidthFindingsPairs[fullWidthFindingsPairs.length - 1];
+  const diagramIsTrailing =
+    !commentsHtml && lastFullWidthPair?.section.fields.some((field) => field.type === 'diagram');
+  if (diagramIsTrailing) bodyHtml += '<hr class="print-divider">';
 
   const doc = `<!doctype html>
 <html lang="en">
@@ -269,8 +283,10 @@ export function openPrintView(schema) {
   .signature-name { font-size: 0.85rem; }
   .print-diagram-row { margin-top: 0.3rem; }
   .print-diagram-image { display: block; max-width: 50%; height: auto; margin: 0 auto; }
-  .print-nodule-grid { width: 100%; border-collapse: collapse; margin-top: 0.3rem; }
-  .print-nodule-grid th, .print-nodule-grid td {
+  /* Shared by any sheet's bespoke wide-table printRender (Thyroid's Nodule
+     Table, Carotid's Vessel Panels) — not specific to either one. */
+  .print-data-grid { width: 100%; border-collapse: collapse; margin-top: 0.3rem; }
+  .print-data-grid th, .print-data-grid td {
     border: 1px solid #999;
     padding: 0.2rem 0.35rem;
     text-align: left;

@@ -155,7 +155,7 @@ function renderNoduleTablePrint(section) {
   // Scoring Key is intentionally omitted from print (stays on-screen only) —
   // the table's Total Points/TIRADS Level columns already carry the scored
   // outcome, and dropping the key helps sheets fit on one printed page.
-  return `<section class="print-section print-nodule-table"><h2>${escapeHtml(section.title)}</h2><table class="print-nodule-grid"><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table></section>`;
+  return `<section class="print-section print-nodule-table"><h2>${escapeHtml(section.title)}</h2><table class="print-data-grid"><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table></section>`;
 }
 
 export const thyroidSheet = {

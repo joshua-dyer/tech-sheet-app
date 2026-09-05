@@ -22,21 +22,38 @@ function labelText(field) {
   return field.unit ? `${field.label} (${field.unit})` : field.label;
 }
 
-function renderSimpleInput(field) {
+// Bare control-builders, split from their label-wrapping callers below so
+// js/formRenderer.js's own renderSectionTable (bare cells, labeled instead by
+// the table's column headers) can reuse the exact same control construction
+// — including things like number's step="0.1" — without duplicating it.
+function buildInputControl(field) {
   const inputAttrs = { type: field.type, id: field.id, name: field.id };
   if (field.type === 'number') inputAttrs.step = '0.1';
-  const input = el('input', inputAttrs);
-  const label = el('label', { for: field.id, text: labelText(field) });
-  return el('div', { class: 'field' }, [label, input]);
+  return el('input', inputAttrs);
 }
 
-function renderSelect(field) {
+function buildSelectControl(field) {
   const select = el('select', { id: field.id, name: field.id });
   select.appendChild(el('option', { value: '', text: 'Select…' }));
   for (const opt of field.options) {
     select.appendChild(el('option', { value: opt, text: opt }));
   }
   if (field.defaultValue !== undefined) select.value = field.defaultValue;
+  return select;
+}
+
+function buildComputedControl(field) {
+  return el('output', { id: field.id, text: '—' });
+}
+
+function renderSimpleInput(field) {
+  const input = buildInputControl(field);
+  const label = el('label', { for: field.id, text: labelText(field) });
+  return el('div', { class: 'field' }, [label, input]);
+}
+
+function renderSelect(field) {
+  const select = buildSelectControl(field);
   const label = el('label', { for: field.id, text: labelText(field) });
   return el('div', { class: 'field' }, [label, select]);
 }
@@ -84,7 +101,7 @@ function renderTextarea(field) {
 }
 
 function renderComputed(field) {
-  const output = el('output', { id: field.id, text: '—' });
+  const output = buildComputedControl(field);
   const label = el('label', { for: field.id, text: labelText(field) });
   return el('div', { class: 'field' }, [label, output]);
 }
@@ -169,6 +186,29 @@ function renderDynamicTable(field) {
   ]);
 }
 
+// Pure read-only reference display — not tied to any form field, so it's
+// deliberately absent from getDisplayValue/hasValue/clearSheet: their
+// existing `default` branches already treat an unrecognized type as "no
+// value, nothing to clear," which is exactly "on-screen only, never
+// printed" with no extra code anywhere else.
+function renderStaticTable(field) {
+  const table = el('table', { class: 'dynamic-table' });
+  const headRow = el('tr');
+  for (const col of field.columns) headRow.appendChild(el('th', { text: col }));
+  table.appendChild(el('thead', {}, [headRow]));
+
+  const tbody = el('tbody');
+  for (const rowValues of field.rows) {
+    const tr = el('tr');
+    for (const cellText of rowValues) tr.appendChild(el('td', { text: cellText }));
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+
+  const tableScroll = el('div', { class: 'dynamic-table-scroll' }, [table]);
+  return el('div', { class: 'field field-wide' }, [tableScroll]);
+}
+
 const RENDERERS = {
   text: renderSimpleInput,
   number: renderSimpleInput,
@@ -181,6 +221,7 @@ const RENDERERS = {
   computed: renderComputed,
   diagram: renderDiagram,
   'dynamic-table': renderDynamicTable,
+  'static-table': renderStaticTable,
 };
 
 function renderField(field) {
@@ -199,9 +240,55 @@ function renderField(field) {
   return wrapper;
 }
 
+// A fixed (non-repeatable) table of otherwise-ordinary fields — e.g. Right/
+// Left vessel panels, where each "row" is really just a normal set of
+// individually-declared fields with resolved ids, laid out as a real
+// <table> instead of the default card/field-grid because the row headers
+// (Right/Left) already label each field, making per-field labels redundant.
+// Reuses the bare control-builders above, not js/dynamicTable.js — that
+// module's add/delete-row and per-row scoring logic doesn't apply to a
+// fixed two-row table.
+function buildTableCell(field) {
+  const td = el('td');
+  if (!field) return td;
+  if (field.type === 'select') td.appendChild(buildSelectControl(field));
+  else if (field.type === 'computed') td.appendChild(buildComputedControl(field));
+  else td.appendChild(buildInputControl(field));
+  return td;
+}
+
+function renderSectionTable(section) {
+  const table = el('table', { class: 'dynamic-table' });
+  const headRow = el('tr');
+  headRow.appendChild(el('th', { text: '' }));
+  for (const heading of section.tableColumns) headRow.appendChild(el('th', { text: heading }));
+  table.appendChild(el('thead', {}, [headRow]));
+
+  const fieldsById = new Map(section.fields.map((field) => [field.id, field]));
+  const tbody = el('tbody');
+  for (const row of section.tableRows) {
+    const tr = el('tr');
+    tr.appendChild(el('th', { text: row.label, scope: 'row' }));
+    for (const fieldId of row.fieldIds) {
+      tr.appendChild(buildTableCell(fieldsById.get(fieldId)));
+    }
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+
+  const tableScroll = el('div', { class: 'dynamic-table-scroll' }, [table]);
+  return el('div', { class: 'field-wide' }, [tableScroll]);
+}
+
 function renderSection(section) {
   const sectionEl = el('section', { class: 'card', id: `section-${section.id}` });
   sectionEl.appendChild(el('h2', { text: section.title }));
+
+  if (section.layout === 'table') {
+    sectionEl.appendChild(renderSectionTable(section));
+    return sectionEl;
+  }
+
   const body = el('div', { class: 'field-grid' });
 
   let rowBuffer = [];
