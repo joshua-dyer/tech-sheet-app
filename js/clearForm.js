@@ -38,8 +38,12 @@ export function clearSheet(schema) {
       case 'date':
       case 'textarea':
       case 'select': {
+        // Restores a field's declared defaultValue (e.g. the Physician Name
+        // dropdown, Carotid's Stenosis Location, Echo's starter Comments
+        // text) rather than always blanking it — Clear should return a
+        // field to its as-loaded state, not an unset one.
         const inputEl = document.getElementById(field.id);
-        if (inputEl) inputEl.value = '';
+        if (inputEl) inputEl.value = field.defaultValue ?? '';
         break;
       }
       case 'radio':

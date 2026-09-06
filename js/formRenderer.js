@@ -29,7 +29,9 @@ function labelText(field) {
 function buildInputControl(field) {
   const inputAttrs = { type: field.type, id: field.id, name: field.id };
   if (field.type === 'number') inputAttrs.step = '0.1';
-  return el('input', inputAttrs);
+  const input = el('input', inputAttrs);
+  if (field.defaultValue !== undefined) input.value = field.defaultValue;
+  return input;
 }
 
 function buildSelectControl(field) {
@@ -96,6 +98,7 @@ function renderCheckboxGroup(field) {
 
 function renderTextarea(field) {
   const textarea = el('textarea', { id: field.id, name: field.id, rows: field.large ? 6 : 3 });
+  if (field.defaultValue !== undefined) textarea.value = field.defaultValue;
   const label = el('label', { for: field.id, text: labelText(field) });
   return el('div', { class: 'field field-wide' }, [label, textarea]);
 }
@@ -280,12 +283,28 @@ function renderSectionTable(section) {
   return el('div', { class: 'field-wide' }, [tableScroll]);
 }
 
+// A fixed-N-per-row grid of otherwise-ordinary, individually-labeled fields
+// (e.g. Echocardiogram's 2D M-Mode Dimensions) — unlike `row: true` grouping,
+// which flex-wraps based on available width, this guarantees the exact
+// column count the paper form uses regardless of viewport. Each cell is a
+// fully normal `renderField(field)` (own label, own reveal support if ever
+// needed) — only the *container* layout differs from the default card stack.
+function renderSectionGrid(section) {
+  const grid = el('div', { class: 'field-grid-cols', style: `--grid-cols: ${section.gridColumns || 3}` });
+  for (const field of section.fields) grid.appendChild(renderField(field));
+  return grid;
+}
+
 function renderSection(section) {
   const sectionEl = el('section', { class: 'card', id: `section-${section.id}` });
   sectionEl.appendChild(el('h2', { text: section.title }));
 
   if (section.layout === 'table') {
     sectionEl.appendChild(renderSectionTable(section));
+    return sectionEl;
+  }
+  if (section.layout === 'grid') {
+    sectionEl.appendChild(renderSectionGrid(section));
     return sectionEl;
   }
 

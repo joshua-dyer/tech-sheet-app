@@ -301,6 +301,21 @@ button:focus-visible {
   }
 }
 
+/* Fixed-N-per-row grid (e.g. Echocardiogram's 2D M-Mode Dimensions) —
+   guarantees the exact column count a paper form's layout used, unlike
+   `.row`'s flex-wrap which reflows based on available width. */
+.field-grid-cols {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-cols, 3), 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 600px) {
+  .field-grid-cols {
+    grid-template-columns: 1fr;
+  }
+}
+
 .diagram-field {
   border: none;
   margin: 0;

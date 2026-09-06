@@ -310,10 +310,56 @@ TIRADS Level from Total Points:
   from print — same treatment as Thyroid's Scoring Key
 
 
+## 11. Echocardiogram Sheet — Fields
+
+### 2D M-Mode Dimensions
+Grid layout matching the paper sheet's 3-column arrangement. Reference
+ranges shown as part of each field's label.
+
+| Field | Range | Unit |
+|---|---|---|
+| RV | 20–30 | mm |
+| LA | 19–39 | mm |
+| PA sys. press | (none) | mmHg |
+| Ao | 20–37 | mm |
+| LVIDd | 37–56 | mm |
+| IVS | 6–11 | mm |
+| Ejc. Fr | (none) | % — free text (entered as a range, e.g. "55-60") |
+| AoV | 15–36 | mm |
+| Effusion | (none) | mm Depth |
+| LVPW | 6–11 | mm |
+| PA | 15–21 | mm |
+| RVW | 5–6 | mm |
+
+### Doppler
+Two valve rows only (TV and PV are no longer used and are omitted
+entirely, not just hidden).
+
+| Valve | Fields |
+|---|---|
+| MV | Valve Structure (dropdown: Normal / Sclerotic / Prolapse / Other → reveals free text), Peak Velocity (free text, entered as "E/A" string e.g. "120/65"), Valve Area (cm²), MeanPG (mmHg) |
+| AV | Valve Structure (same dropdown), Peak Velocity (single numeric value), Valve Area (cm²), MeanPG (mmHg) |
+
+### Exam Quality
+Dropdown: Good / Fair / Poor
+
+### Technologist Comments — default starter text
+Unlike other sheets, this field is pre-populated on load with standard
+starter text (fully editable/replaceable):
+
+> "The ejection fraction is visually estimated between %."
+>
+> "The IVC showed normal respiratory collapse. The visualized portions
+> of the Abdominal Aorta and Aortic Arch measure normal in vessel
+> diameter."
+
+Clear resets this field back to the starter text (its default state),
+not to fully blank — consistent with how other defaulted fields (e.g.
+Sex, Physician dropdown) already reset to their default on Clear rather
+than to an empty/unset state.
 
 
-
-  ## 11. Explicitly Out of Scope (Phase 1)
+  ## 12. Explicitly Out of Scope (Phase 1)
 - Auto-population of Technologist Comments based on measurement values
   (Liver >16.5cm, Kidney Cortex <1.3cm, Spleen ≥13cm) — this is planned
   for Phase 2, after the visual/layout design is finalized. Do not
@@ -323,7 +369,7 @@ TIRADS Level from Total Points:
   Print/PDF feature in Section 6, not stored anywhere at this time)
 - Any backend, database, or account system
 
-## 12. Architecture Note
+## 13. Architecture Note
 Build with reuse in mind: this is the first of ~15 planned tech sheets
 (8 common). Favor a reusable field/section component pattern over
 one-off hand-coded HTML per form, so future sheet types can be added
