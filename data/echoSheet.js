@@ -1,6 +1,6 @@
 import { demographicsSection } from './demographicsSection.js';
 import { interpretationSection } from './interpretationSection.js';
-import { escapeHtml, getDisplayValue, hasValue } from '../js/printHelpers.js';
+import { escapeHtml, getDisplayValue, hasRealData } from '../js/printHelpers.js';
 
 // Row-major order (not DESIGN.md's column-major listing) so the CSS grid's
 // default left-to-right, top-to-bottom fill matches the paper form's actual
@@ -42,16 +42,6 @@ const avFields = [
   { id: 'avValveArea', label: 'Valve Area', type: 'number' },
   { id: 'avMeanPG', label: 'MeanPG', type: 'number' },
 ];
-
-// A field still sitting at its own declared defaultValue (Valve Structure,
-// defaulted to Normal) doesn't count as "real" data for omission purposes —
-// otherwise the section could never be detected as blank, since that
-// default is applied at render time before the tech touches anything (same
-// fix as Carotid's Vessel Panels needed for Stenosis Location).
-function hasRealData(field) {
-  if (!hasValue(field)) return false;
-  return field.defaultValue === undefined || getDisplayValue(field) !== field.defaultValue;
-}
 
 // Bespoke — see js/printView.js's `section.printRender` extension point
 // (same pattern as Carotid's Vessel Panels). "Other - See Below" prints

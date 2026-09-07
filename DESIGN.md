@@ -141,6 +141,24 @@ added later (~15 total, 8 common).
     current behavior (Technologist Comments appears in its normal
     position)
 
+## Default Values & Print Inclusion (Cross-Sheet Rule)
+
+Some select fields declare a defaultValue representing a genuine normal/
+expected clinical finding (e.g. Carotid's Stenosis Location = N/A,
+Venous's Compression = Good) — this is a real answer, not a placeholder,
+and exists so a tech can complete a normal study quickly.
+
+Rule: a field sitting at its declared default does not, by itself, count
+as "real data" when deciding whether an otherwise-untouched section
+should appear in print. But once a section is included in print (because
+something in it has genuinely changed), every field in it — including
+ones still at their default — prints its current value normally.
+
+This is implemented once, generically, in the shared print engine
+(js/printHelpers.js) — sheet-specific files should not reimplement this
+comparison locally.
+
+
 ## 8. Diagram Markup Feature (Thyroid, Carotid, Arterial sheets)
 
 Some sheets (not Abdominal) include a fixed anatomical diagram that
@@ -359,7 +377,39 @@ Sex, Physician dropdown) already reset to their default on Clear rather
 than to an empty/unset state.
 
 
-  ## 12. Explicitly Out of Scope (Phase 1)
+## 12. Venous Doppler Sheet — Fields
+
+No diagram markup on this sheet.
+
+### Vessel Assessment Table
+Five fixed rows (Common Iliac, Common Femoral, Superficial Femoral,
+Popliteal, Posterior Tibial), each with six dropdown cells (Right and
+Left, each with Compression/Flow/Thrombus) — layout: 'table' pattern,
+same mechanism as Carotid's Vessel Panels. No add/delete rows.
+
+Dropdown options, each defaulting to its first (normal) option:
+- Compression: Good / Fair / Poor
+- Flow: Normal / Reduced / None Visualized
+- Thrombus: Negative / Partial / Chronic / Positive
+
+### Venous Insufficiency Assessment
+Two fixed rows (Deep Veins, Superficial Veins), each with Right and Left
+columns containing: Insufficiency? (Yes/No dropdown, defaults to No)
+and Maximum Reflux (numeric, ms). Same layout: 'table' pattern.
+
+Rationale for defaulting to normal/negative findings throughout this
+sheet: exams are typically negative studies, and defaulting to normal
+lets a tech complete an unremarkable exam by only touching the fields
+that actually need to change.
+
+### Comments / Interpretation
+Standard shared commentsSection and interpretationSection, unchanged —
+the paper form's "Impression" label refers to the same Physician
+Interpretation behavior already established elsewhere; Technologist
+Comments is rarely used on this sheet in practice (studies are read
+same-day), but the field/component is unchanged.
+
+  ## 13. Explicitly Out of Scope (Phase 1)
 - Auto-population of Technologist Comments based on measurement values
   (Liver >16.5cm, Kidney Cortex <1.3cm, Spleen ≥13cm) — this is planned
   for Phase 2, after the visual/layout design is finalized. Do not
@@ -369,8 +419,26 @@ than to an empty/unset state.
   Print/PDF feature in Section 6, not stored anywhere at this time)
 - Any backend, database, or account system
 
-## 13. Architecture Note
+## 14. Architecture Note
 Build with reuse in mind: this is the first of ~15 planned tech sheets
 (8 common). Favor a reusable field/section component pattern over
 one-off hand-coded HTML per form, so future sheet types can be added
 primarily as configuration/content rather than new engineering.
+
+
+## 15. Verification & Testing Environment
+
+This environment has no browser automation tooling available (no
+Playwright, Puppeteer, or similar) — do not attempt to install any for
+verification purposes. When you need to confirm actual rendered
+appearance, layout, or print output, describe specifically what you'd
+like checked and ask the user to verify it via Live Server — they are
+generally available and near the console while work is in progress, so
+this is a fast, low-friction way to get real visual confirmation.
+
+Acceptable self-verification in the meantime: syntax validation (`node
+--check`), tracing render logic by hand through the relevant
+formRenderer.js/printView.js code paths, and confirming files serve
+correctly over HTTP. These are useful and worth doing, but are not a
+substitute for an actual visual check when one is warranted — be clear
+about which category your verification falls into when reporting back.

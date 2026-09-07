@@ -67,3 +67,17 @@ export function hasValue(field) {
   const value = getDisplayValue(field);
   return value !== '' && value !== '—';
 }
+
+// A field still sitting at its own declared `defaultValue` doesn't count as
+// "real" data for a section's print-omission check — otherwise a section
+// full of normal-default dropdowns (Carotid's Stenosis Location, Echo's
+// Valve Structure, Venous's Compression/Flow/Thrombus/Insufficiency) could
+// never be detected as blank, since that default is applied at render time
+// before the tech touches anything. Once a section IS printed (because some
+// other field in it has real data), getDisplayValue still returns the
+// current value normally — this only affects the "is there anything here"
+// check, not what's shown once there is.
+export function hasRealData(field) {
+  if (!hasValue(field)) return false;
+  return field.defaultValue === undefined || getDisplayValue(field) !== field.defaultValue;
+}

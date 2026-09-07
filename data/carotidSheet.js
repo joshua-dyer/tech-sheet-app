@@ -1,7 +1,7 @@
 import { demographicsSection } from './demographicsSection.js';
 import { commentsSection } from './commentsSection.js';
 import { interpretationSection } from './interpretationSection.js';
-import { escapeHtml, getDisplayValue, hasValue } from '../js/printHelpers.js';
+import { escapeHtml, getDisplayValue, hasRealData } from '../js/printHelpers.js';
 
 // Right/Left are fixed rows (no add/delete) of otherwise-ordinary fields
 // with resolved, prefixed ids — same convention as Thyroid's
@@ -45,15 +45,6 @@ function vesselFields(prefix) {
 
 const rightVesselFields = vesselFields('right');
 const leftVesselFields = vesselFields('left');
-
-// A field still sitting at its own declared defaultValue (Stenosis
-// Location, defaulted to ICA) doesn't count as "real" data for omission
-// purposes — otherwise the section could never be detected as blank, since
-// that default is applied at render time before the tech touches anything.
-function hasRealData(field) {
-  if (!hasValue(field)) return false;
-  return field.defaultValue === undefined || getDisplayValue(field) !== field.defaultValue;
-}
 
 // Bespoke — see js/printView.js's `section.printRender` extension point
 // (same pattern as Thyroid's Nodule Table). Omits the whole section only if
