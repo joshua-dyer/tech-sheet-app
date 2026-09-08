@@ -9,4 +9,5 @@ export const SHEETS = [
   { id: 'venousLe', label: 'Venous Doppler LE', href: 'venousLe.html' },
   { id: 'misc', label: 'Misc', href: 'misc.html' },
   { id: 'renal', label: 'Renal', href: 'renal.html' },
+  { id: 'arterialLe', label: 'Arterial Doppler LE', href: 'arterialLe.html' },
 ];

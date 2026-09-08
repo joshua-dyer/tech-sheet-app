@@ -159,7 +159,7 @@ This is implemented once, generically, in the shared print engine
 comparison locally.
 
 
-## 8. Diagram Markup Feature (Thyroid, Carotid, Arterial sheets)
+## 8. Diagram Markup Feature (Thyroid, Carotid, Arterial, and Renal sheets)
 
 Some sheets (not Abdominal) include a fixed anatomical diagram that
 technologists freehand-mark to indicate points of interest. This section
@@ -377,9 +377,9 @@ Sex, Physician dropdown) already reset to their default on Clear rather
 than to an empty/unset state.
 
 
-## 12. Venous Doppler Sheet — Fields
-
+## 12. Venous Doppler Lower Extremity Sheet — Fields
 No diagram markup on this sheet.
+We need to name our files to specify venousLe to be prepared for Le and Ue versions of doppler studies. 
 
 ### Vessel Assessment Table
 Five fixed rows (Common Iliac, Common Femoral, Superficial Femoral,
@@ -416,6 +416,65 @@ same-day), but the field/component is unchanged.
 - Right Kidney Volume: auto-calculated, read-only display field
   = Length × Width × Height × 0.523
 - Left Kidney mirrors the same form entry fields.
+
+
+## 15. Arterial Doppler LE Sheet — Fields
+
+Naming convention: this sheet documents lower-extremity arterial
+anatomy, so it follows the LE/UE naming convention established with
+Venous — id `arterialLe`, file names `arterialLe.html` /
+`data/arterialLeSheet.js` / `js/arterialLeApp.js`, nav label "Arterial
+Doppler LE".
+
+### Header Field
+- Maximum Brachial Systolic Pressure (mmHg) — a single shared value,
+  not per-side; used as the denominator for both ABI calculations below
+
+### Vessel Table
+layout: 'table' pattern (same mechanism as Carotid's Vessel Panels and
+Venous's tables). Nine fixed rows, no add/delete:
+
+C.Iliac, C.Femoral, S.Femoral, P.Femoral, Popliteal, P.Tibial (prox),
+P.Tibial (dist), A.Tibial (dist), Peroneal
+
+Each row has Right and Left columns, each containing:
+- Velocity (cm/s) — number
+- Phasicity — dropdown: Tri / Bi / Mono / No Flow Detected
+- Pressure (mmHg) — number
+
+### ABI (Ankle-Brachial Index)
+One computed, read-only field per side (Right ABI, Left ABI), displayed
+side by side. Formula per side:ABI = MAX(P.Tibial dist Pressure, A.Tibial dist Pressure,
+Peroneal Pressure) ÷ Maximum Brachial Systolic Pressure
+
+
+Uses the existing computedFields mechanism — dependsOn the three
+side-specific pressure fields plus the shared Maximum Brachial field.
+Displays "—" if Maximum Brachial is missing/zero, or if none of the
+three source pressures have a value.
+
+### Reference Ranges
+Static reference display (static-table field type, same mechanism as
+Carotid's Reference Table) — on-screen only, omitted from print:
+
+| ABI Range | Interpretation |
+|---|---|
+| 1.3 – 1.0 | Normal |
+| 1.0 – 0.9 | Borderline |
+| 0.9 – 0.5 | Mild – Moderate |
+| < 0.5 | Severe |
+| > 1.3 | Suggests calcified vessel walls |
+
+### Diagram Markup
+Uses the shared Diagram Markup feature (Section 7). Image:
+/images/arterial_diagram.png. Freehand, unconstrained strokes — same
+convention as Carotid and Renal (not Thyroid's numbered-circle
+convention).
+
+### Shared Sections
+Demographics, Technologist Comments, Physician Interpretation — standard
+shared components, no sheet-specific behavior.
+
 
 
   ## 14. Explicitly Out of Scope (Phase 1)
