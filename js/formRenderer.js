@@ -28,7 +28,7 @@ function labelText(field) {
 // — including things like number's step="0.1" — without duplicating it.
 function buildInputControl(field) {
   const inputAttrs = { type: field.type, id: field.id, name: field.id };
-  if (field.type === 'number') inputAttrs.step = '0.1';
+  if (field.type === 'number') inputAttrs.step = field.step ?? '0.1';
   const input = el('input', inputAttrs);
   if (field.defaultValue !== undefined) input.value = field.defaultValue;
   return input;

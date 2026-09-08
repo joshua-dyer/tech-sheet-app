@@ -409,24 +409,31 @@ Interpretation behavior already established elsewhere; Technologist
 Comments is rarely used on this sheet in practice (studies are read
 same-day), but the field/component is unchanged.
 
-  ## 13. Explicitly Out of Scope (Phase 1)
+## 13. Renal Sheet — Fields & Scoring
+
+### Renal Measurements
+- Right Kidney: Length, Width, Height (cm) — grouped horizontally, same pattern as Abdominal's Kidney sections
+- Right Kidney Volume: auto-calculated, read-only display field
+  = Length × Width × Height × 0.523
+- Left Kidney mirrors the same form entry fields.
+
+
+  ## 14. Explicitly Out of Scope (Phase 1)
 - Auto-population of Technologist Comments based on measurement values
   (Liver >16.5cm, Kidney Cortex <1.3cm, Spleen ≥13cm) — this is planned
-  for Phase 2, after the visual/layout design is finalized. Do not
-  implement the auto-population logic yet, but the Technologist Comments
-  field should exist as a plain textarea now.
+  for Phase 2, after the visual/layout design is finalized. Do not implement the auto-population logic yet, but the Technologist Comments field should exist as a plain textarea now.
 - Data persistence via backend/database (export is handled via the
   Print/PDF feature in Section 6, not stored anywhere at this time)
 - Any backend, database, or account system
 
-## 14. Architecture Note
+## 15. Architecture Note
 Build with reuse in mind: this is the first of ~15 planned tech sheets
 (8 common). Favor a reusable field/section component pattern over
 one-off hand-coded HTML per form, so future sheet types can be added
 primarily as configuration/content rather than new engineering.
 
 
-## 15. Verification & Testing Environment
+## 16. Verification & Testing Environment
 
 This environment has no browser automation tooling available (no
 Playwright, Puppeteer, or similar) — do not attempt to install any for

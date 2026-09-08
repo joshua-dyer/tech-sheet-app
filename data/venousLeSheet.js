@@ -103,9 +103,9 @@ function renderTablePrint(section) {
   return `<section class="print-section"><h2>${escapeHtml(section.title)}</h2><table class="print-data-grid"><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table></section>`;
 }
 
-export const venousSheet = {
-  id: 'venous',
-  title: 'Venous Doppler',
+export const venousLeSheet = {
+  id: 'venousLe',
+  title: 'Venous Doppler Lower Extremities',
   sections: [
     demographicsSection,
     {

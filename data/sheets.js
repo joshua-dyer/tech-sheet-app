@@ -6,6 +6,7 @@ export const SHEETS = [
   { id: 'thyroid', label: 'Thyroid', href: 'thyroid.html' },
   { id: 'carotid', label: 'Carotid', href: 'carotid.html' },
   { id: 'echo', label: 'Echo', href: 'echo.html' },
-  { id: 'venous', label: 'Venous', href: 'venous.html' },
+  { id: 'venousLe', label: 'Venous Doppler LE', href: 'venousLe.html' },
   { id: 'misc', label: 'Misc', href: 'misc.html' },
+  { id: 'renal', label: 'Renal', href: 'renal.html' },
 ];
