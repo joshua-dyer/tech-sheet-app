@@ -71,6 +71,7 @@ export const abdominalSheet = {
             'Sludge',
             'Wall Thickening',
             'Pericholecystic Fluid',
+            'Surgically Absent',
             "Positive Murphy's Sign",
           ],
           // Reflects that the technologist didn't flag anything — not a

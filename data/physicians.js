@@ -3,6 +3,8 @@
 // be reused across future sheet types, not just Abdominal.
 export const PHYSICIAN_NAMES = [
   // 'Dr. Jane Smith',
+  'David F Wynne, MD, FACP',
+  'James G Sullivan, MD'
 ];
 
 export const OTHER_PHYSICIAN_OPTION = 'Other - enter manually';

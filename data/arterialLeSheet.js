@@ -3,7 +3,7 @@ import { commentsSection } from './commentsSection.js';
 import { interpretationSection } from './interpretationSection.js';
 import { escapeHtml, getDisplayValue, hasRealData } from '../js/printHelpers.js';
 
-const PHASICITY_OPTIONS = ['Tri', 'Bi', 'Mono', 'No Flow Detected'];
+const PHASICITY_OPTIONS = ['Triphasic', 'Biphasic', 'Monophasic', 'No Flow Detected'];
 
 // Vessel is the row, side is folded into each field id — same convention as
 // Venous's vesselRowFields (data/venousLeSheet.js).
