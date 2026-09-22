@@ -1,4 +1,4 @@
-import { SHEETS } from '../data/sheets.js';
+import { SHEETS, SHEET_GROUPS } from '../data/sheets.js';
 import { hasUnsavedChanges } from './clearForm.js';
 import { showConfirmModal } from './confirmModal.js';
 
@@ -19,12 +19,23 @@ export function initNav(schema, currentSheetId) {
   select.className = 'site-nav-select';
   select.setAttribute('aria-label', 'Switch tech sheet');
 
-  for (const sheet of SHEETS) {
-    const option = document.createElement('option');
-    option.value = sheet.href;
-    option.textContent = sheet.label;
-    if (sheet.id === currentSheetId) option.selected = true;
-    select.appendChild(option);
+  // Grouped into <optgroup>s per SHEET_GROUPS (Common/Uncommon) rather than
+  // one flat list — group membership/order/labels live in data/sheets.js,
+  // not hardcoded here, so a future group needs no change to this file.
+  for (const { key, label } of SHEET_GROUPS) {
+    const sheetsInGroup = SHEETS.filter((sheet) => sheet.group === key);
+    if (sheetsInGroup.length === 0) continue;
+
+    const optgroup = document.createElement('optgroup');
+    optgroup.label = label;
+    for (const sheet of sheetsInGroup) {
+      const option = document.createElement('option');
+      option.value = sheet.href;
+      option.textContent = sheet.label;
+      if (sheet.id === currentSheetId) option.selected = true;
+      optgroup.appendChild(option);
+    }
+    select.appendChild(optgroup);
   }
 
   select.addEventListener('change', () => {
