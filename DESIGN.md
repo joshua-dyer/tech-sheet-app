@@ -418,7 +418,7 @@ same-day), but the field/component is unchanged.
 - Left Kidney mirrors the same form entry fields.
 
 
-## 15. Arterial Doppler LE Sheet — Fields
+## 14. Arterial Doppler LE Sheet — Fields
 
 Naming convention: this sheet documents lower-extremity arterial
 anatomy, so it follows the LE/UE naming convention established with
@@ -476,8 +476,95 @@ Demographics, Technologist Comments, Physician Interpretation — standard
 shared components, no sheet-specific behavior.
 
 
+## 15. Abdominal Duplex Sheet — Fields
 
-  ## 14. Explicitly Out of Scope (Phase 1)
+A variant of the Abdominal sheet adding Doppler measurements. Built by
+extending Abdominal's existing sections rather than duplicating them —
+Liver, Gallbladder, Portal Vein, CBD, Pancreas, Spleen, Other,
+Demographics, Comments, and Interpretation are identical and reused
+directly from data/abdominalSheet.js's exports.
+
+### Additions to Abdominal Aorta
+- Peak Systolic Velocity (cm/s) — added as a fourth field alongside the
+  existing Prox/Mid/Dist measurements, in the same card (grouped
+  together since these are all taken as part of the same aortic
+  assessment). Does not affect the existing Dissection/Involves Iliacs
+  reveal logic, which remains driven by diameter (Prox/Mid/Dist), not
+  velocity.
+
+### Additions to Right/Left Kidney
+- Resistance Index — added to each existing Kidney section (alongside
+  Length/Width/Height/Cortex), same field convention as the Renal
+  sheet's RI (number input, step 0.01, no reference range).
+
+### New: Right/Left Renal Artery sections
+Placed immediately after their corresponding Kidney section.
+- Systolic Velocity (cm/s), Diastolic Velocity (cm/s) — two separate
+  number fields
+- Renal Artery:Aortic Ratio — computed, read-only, using the existing
+  computedFields mechanism: Renal Artery Systolic ÷ Aortic Peak Systolic
+  (same side). Displays "—" if either input is missing/invalid.
+
+ 
+ ## 16. Abdominal Aorta Sheet — Fields
+
+A focused variant covering only the Abdominal Aorta and Iliacs, built by
+duplicating the original Aorta card structure rather than reusing the
+old two-column Longitudinal/Transverse layout. Demographics,
+Technologist Comments, and Physician Interpretation are reused as-is
+from the shared sections.
+
+### Aorta — Longitudinal
+Prox, Mid, Dist (cm, step 0.1) — same structure as the original
+Abdominal sheet's Aorta card, plus Peak Systolic Velocity (cm/s).
+
+### Aorta — Transverse
+Prox, Mid, Dist (cm, step 0.1) — same structure, no velocity field.
+
+### Iliacs
+Right Iliac and Left Iliac, each with two fields: Longitudinal (cm) and
+Transverse (cm), step 0.1. Simpler shape than the Aorta cards (no
+Prox/Mid/Dist breakdown).
+
+### Dissection / Involves Iliacs reveal
+Extends the original groupReveals mechanism from 3 trigger fields to 6:
+if ANY of the six Aorta diameter measurements (Longitudinal Prox/Mid/
+Dist, Transverse Prox/Mid/Dist) is ≥3.5cm, reveal Dissection? (Y/N) and
+Involves Iliacs? (Y/N) once, evaluated the same way regardless of which
+measurement/orientation triggered it. The Iliacs section itself has no
+separate reveal logic — outlier findings there are documented in
+Technologist Comments.
+
+
+
+#### ---- Begin Uncommon Sheets ---- 
+
+
+## 17. Pelvic Ultrasound Sheet — Fields
+
+### History
+- Previous Surgery: free text, single line (e.g. "Tubal Ligation",
+  "Partial Hysterectomy", "Oophorectomy")
+- Gravida, Para: integer fields, step 1, minimum 0, no upper bound
+
+### LMC (Last Menstrual Cycle)
+Radio group with three mutually exclusive options: Date / Menopausal /
+N/A. Selecting "Date" reveals a date input field (on change, per the
+standard selection-field reveal timing); selecting Menopausal or N/A
+keeps the date field hidden.
+
+### Uterus
+Length, Height, Width (cm, step 0.1), plus computed read-only Volume
+(cm³) = Length × Width × Height × 0.523 — same constant as the Renal
+sheet's Kidney Volume (kept consistent rather than introducing a third
+distinct volume constant).
+
+### Right Ovary / Left Ovary
+Same structure as Uterus: Length, Height, Width (cm, step 0.1), plus
+computed Volume using the same 0.523 formula.
+
+ 
+  ## 18. Explicitly Out of Scope (Phase 1)
 - Auto-population of Technologist Comments based on measurement values
   (Liver >16.5cm, Kidney Cortex <1.3cm, Spleen ≥13cm) — this is planned
   for Phase 2, after the visual/layout design is finalized. Do not implement the auto-population logic yet, but the Technologist Comments field should exist as a plain textarea now.
@@ -485,14 +572,14 @@ shared components, no sheet-specific behavior.
   Print/PDF feature in Section 6, not stored anywhere at this time)
 - Any backend, database, or account system
 
-## 15. Architecture Note
+## 19. Architecture Note
 Build with reuse in mind: this is the first of ~15 planned tech sheets
 (8 common). Favor a reusable field/section component pattern over
 one-off hand-coded HTML per form, so future sheet types can be added
 primarily as configuration/content rather than new engineering.
 
 
-## 16. Verification & Testing Environment
+## 20. Verification & Testing Environment
 
 This environment has no browser automation tooling available (no
 Playwright, Puppeteer, or similar) — do not attempt to install any for

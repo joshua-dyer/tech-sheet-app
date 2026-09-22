@@ -24,159 +24,200 @@ function renderGallbladderPrint(section) {
   return `<section class="print-section"><h2>${escapeHtml(section.title)}</h2><div class="print-row"><span class="print-label">${escapeHtml(findingsField.label)}</span><span class="print-value">${escapeHtml(value)}</span></div></section>`;
 }
 
+// Aorta and the two Kidney sections are factories (not plain objects) so
+// data/abdominalDuplexSheet.js can extend them with Doppler-specific fields
+// without duplicating the base Length/Width/Height/Cortex or
+// Prox/Mid/Dist field lists — `extraFields` are appended at a fixed point
+// (after the base measurements, before Aorta's Dissection/Iliacs), and each
+// call returns a fresh object, so the two sheets never share a mutable
+// reference. Aorta's reveal-driving ids (aortaProx/Mid/Dist) never move and
+// never gain a new trigger, so aortaGroupReveal below stays correct
+// (and unaffected by whatever extraFields a caller appends) for both sheets.
+export function aortaSection(extraFields = []) {
+  return {
+    id: 'aorta',
+    title: 'Abd. Aorta',
+    rowLabel: 'Measurements',
+    fields: [
+      { id: 'aortaProx', label: 'Proximal', type: 'number', unit: 'cm', row: true },
+      { id: 'aortaMid', label: 'Mid', type: 'number', unit: 'cm', row: true },
+      { id: 'aortaDist', label: 'Distal', type: 'number', unit: 'cm', row: true },
+      ...extraFields,
+      {
+        id: 'aortaDissection',
+        label: 'Dissection?',
+        type: 'radio',
+        options: ['Yes', 'No'],
+        hiddenByDefault: true,
+      },
+      {
+        id: 'aortaIliacs',
+        label: 'Involves Iliacs?',
+        type: 'radio',
+        options: ['Yes', 'No'],
+        hiddenByDefault: true,
+      },
+    ],
+  };
+}
+
+export function rightKidneySection(extraFields = []) {
+  return {
+    id: 'rightKidney',
+    title: 'Right Kidney',
+    rowLabel: 'Measurements',
+    fields: [
+      { id: 'rkLength', label: 'Length', type: 'number', unit: 'cm', row: true },
+      { id: 'rkWidth', label: 'Width', type: 'number', unit: 'cm', row: true },
+      { id: 'rkHeight', label: 'Height', type: 'number', unit: 'cm', row: true },
+      { id: 'rkCortex', label: 'Cortex', type: 'number', unit: 'cm', row: true },
+      ...extraFields,
+    ],
+  };
+}
+
+export function leftKidneySection(extraFields = []) {
+  return {
+    id: 'leftKidney',
+    title: 'Left Kidney',
+    rowLabel: 'Measurements',
+    fields: [
+      { id: 'lkLength', label: 'Length', type: 'number', unit: 'cm', row: true },
+      { id: 'lkWidth', label: 'Width', type: 'number', unit: 'cm', row: true },
+      { id: 'lkHeight', label: 'Height', type: 'number', unit: 'cm', row: true },
+      { id: 'lkCortex', label: 'Cortex', type: 'number', unit: 'cm', row: true },
+      ...extraFields,
+    ],
+  };
+}
+
+// Sections Abdominal Duplex reuses completely unmodified — plain exported
+// constants (not factories) so both sheets share the exact same object by
+// reference, and a future fix to any of these only needs to happen once.
+export const liverSection = {
+  id: 'liver',
+  title: 'Liver',
+  fields: [{ id: 'liverLength', label: 'Liver Length', type: 'number', unit: 'cm' }],
+};
+
+export const gallbladderSection = {
+  id: 'gallbladder',
+  title: 'Gallbladder',
+  fields: [
+    {
+      id: 'gallbladderFindings',
+      label: 'Findings',
+      type: 'checkbox-group',
+      options: [
+        'Stones',
+        'Sludge',
+        'Wall Thickening',
+        'Pericholecystic Fluid',
+        'Surgically Absent',
+        "Positive Murphy's Sign",
+      ],
+      // Reflects that the technologist didn't flag anything — not a
+      // clinical assertion, which remains the physician's call. Print
+      // logic for this field also appends/negates Murphy's Sign — see
+      // this section's printRender below.
+      emptyPrintText: 'No abnormalities noted',
+    },
+  ],
+  printRender: renderGallbladderPrint,
+  printRowCount: () => 2,
+};
+
+export const portalVeinSection = {
+  id: 'portalVein',
+  title: 'Portal Vein',
+  fields: [
+    {
+      id: 'portalVein',
+      label: 'Portal Vein',
+      type: 'radio',
+      options: ['Normal', 'Dilated'],
+      reveal: { targetIds: ['portalVeinMeasurement'], condition: (value) => value === 'Dilated' },
+    },
+    {
+      id: 'portalVeinMeasurement',
+      label: 'Portal Vein Diameter',
+      type: 'number',
+      unit: 'cm',
+      hiddenByDefault: true,
+    },
+    {
+      id: 'portalVeinFlow',
+      label: 'Portal Vein Flow',
+      type: 'radio',
+      options: ['Hepatopedal', 'Hepatofugal'],
+    },
+  ],
+};
+
+export const cbdSection = {
+  id: 'cbd',
+  title: 'CBD',
+  fields: [{ id: 'cbd', label: 'CBD', type: 'number', unit: 'cm' }],
+};
+
+export const pancreasSection = {
+  id: 'pancreas',
+  title: 'Pancreas',
+  rowLabel: 'Measurements',
+  // Printed when no measurement was entered and Poorly Visualized wasn't
+  // checked — same non-diagnostic-placeholder pattern as Gallbladder's
+  // field-level emptyPrintText, applied here at the section level since
+  // "no Pancreas entry" spans several independent fields, not one.
+  emptyPrintText: 'No abnormalities noted',
+  fields: [
+    { id: 'pancreasHead', label: 'Head', type: 'number', unit: 'cm', row: true },
+    { id: 'pancreasBody', label: 'Body', type: 'number', unit: 'cm', row: true },
+    { id: 'pancreasTail', label: 'Tail', type: 'number', unit: 'cm', row: true },
+    { id: 'pancreasDuct', label: 'Duct', type: 'number', unit: 'cm', row: true },
+    {
+      id: 'pancreasPoorlyVisualized',
+      label: 'Poorly Visualized',
+      type: 'checkbox',
+    },
+  ],
+};
+
+export const spleenSection = {
+  id: 'spleen',
+  title: 'Spleen',
+  fields: [{ id: 'spleenLength', label: 'Spleen Length', type: 'number', unit: 'cm' }],
+};
+
+export const otherSection = {
+  id: 'other',
+  title: 'Other',
+  fields: [{ id: 'otherFindings', label: 'Other Findings', type: 'textarea' }],
+};
+
+export const aortaGroupReveal = {
+  id: 'aortaReveal',
+  triggerFieldIds: ['aortaProx', 'aortaMid', 'aortaDist'],
+  targetIds: ['aortaDissection', 'aortaIliacs'],
+  condition: (values) => values.some((v) => parseFloat(v) >= 3.5),
+};
+
 export const abdominalSheet = {
   id: 'abdominal',
   title: 'Abdominal Ultrasound',
   sections: [
     demographicsSection,
-    {
-      id: 'aorta',
-      title: 'Abd. Aorta',
-      rowLabel: 'Measurements',
-      fields: [
-        { id: 'aortaProx', label: 'Proximal', type: 'number', unit: 'cm', row: true },
-        { id: 'aortaMid', label: 'Mid', type: 'number', unit: 'cm', row: true },
-        { id: 'aortaDist', label: 'Distal', type: 'number', unit: 'cm', row: true },
-        {
-          id: 'aortaDissection',
-          label: 'Dissection?',
-          type: 'radio',
-          options: ['Yes', 'No'],
-          hiddenByDefault: true,
-        },
-        {
-          id: 'aortaIliacs',
-          label: 'Involves Iliacs?',
-          type: 'radio',
-          options: ['Yes', 'No'],
-          hiddenByDefault: true,
-        },
-      ],
-    },
-    {
-      id: 'liver',
-      title: 'Liver',
-      fields: [{ id: 'liverLength', label: 'Liver Length', type: 'number', unit: 'cm' }],
-    },
-    {
-      id: 'gallbladder',
-      title: 'Gallbladder',
-      fields: [
-        {
-          id: 'gallbladderFindings',
-          label: 'Findings',
-          type: 'checkbox-group',
-          options: [
-            'Stones',
-            'Sludge',
-            'Wall Thickening',
-            'Pericholecystic Fluid',
-            'Surgically Absent',
-            "Positive Murphy's Sign",
-          ],
-          // Reflects that the technologist didn't flag anything — not a
-          // clinical assertion, which remains the physician's call. Print
-          // logic for this field also appends/negates Murphy's Sign — see
-          // this section's printRender below.
-          emptyPrintText: 'No abnormalities noted',
-        },
-      ],
-      printRender: renderGallbladderPrint,
-      printRowCount: () => 2,
-    },
-    {
-      id: 'portalVein',
-      title: 'Portal Vein',
-      fields: [
-        {
-          id: 'portalVein',
-          label: 'Portal Vein',
-          type: 'radio',
-          options: ['Normal', 'Dilated'],
-          reveal: { targetIds: ['portalVeinMeasurement'], condition: (value) => value === 'Dilated' },
-        },
-        {
-          id: 'portalVeinMeasurement',
-          label: 'Portal Vein Diameter',
-          type: 'number',
-          unit: 'cm',
-          hiddenByDefault: true,
-        },
-        {
-          id: 'portalVeinFlow',
-          label: 'Portal Vein Flow',
-          type: 'radio',
-          options: ['Hepatopedal', 'Hepatofugal'],
-        },
-      ],
-    },
-    {
-      id: 'cbd',
-      title: 'CBD',
-      fields: [{ id: 'cbd', label: 'CBD', type: 'number', unit: 'cm' }],
-    },
-    {
-      id: 'pancreas',
-      title: 'Pancreas',
-      rowLabel: 'Measurements',
-      // Printed when no measurement was entered and Poorly Visualized wasn't
-      // checked — same non-diagnostic-placeholder pattern as Gallbladder's
-      // field-level emptyPrintText, applied here at the section level since
-      // "no Pancreas entry" spans several independent fields, not one.
-      emptyPrintText: 'No abnormalities noted',
-      fields: [
-        { id: 'pancreasHead', label: 'Head', type: 'number', unit: 'cm', row: true },
-        { id: 'pancreasBody', label: 'Body', type: 'number', unit: 'cm', row: true },
-        { id: 'pancreasTail', label: 'Tail', type: 'number', unit: 'cm', row: true },
-        { id: 'pancreasDuct', label: 'Duct', type: 'number', unit: 'cm', row: true },
-        {
-          id: 'pancreasPoorlyVisualized',
-          label: 'Poorly Visualized',
-          type: 'checkbox',
-        },
-      ],
-    },
-    {
-      id: 'rightKidney',
-      title: 'Right Kidney',
-      rowLabel: 'Measurements',
-      fields: [
-        { id: 'rkLength', label: 'Length', type: 'number', unit: 'cm', row: true },
-        { id: 'rkWidth', label: 'Width', type: 'number', unit: 'cm', row: true },
-        { id: 'rkHeight', label: 'Height', type: 'number', unit: 'cm', row: true },
-        { id: 'rkCortex', label: 'Cortex', type: 'number', unit: 'cm', row: true },
-      ],
-    },
-    {
-      id: 'leftKidney',
-      title: 'Left Kidney',
-      rowLabel: 'Measurements',
-      fields: [
-        { id: 'lkLength', label: 'Length', type: 'number', unit: 'cm', row: true },
-        { id: 'lkWidth', label: 'Width', type: 'number', unit: 'cm', row: true },
-        { id: 'lkHeight', label: 'Height', type: 'number', unit: 'cm', row: true },
-        { id: 'lkCortex', label: 'Cortex', type: 'number', unit: 'cm', row: true },
-      ],
-    },
-    {
-      id: 'spleen',
-      title: 'Spleen',
-      fields: [{ id: 'spleenLength', label: 'Spleen Length', type: 'number', unit: 'cm' }],
-    },
-    {
-      id: 'other',
-      title: 'Other',
-      fields: [{ id: 'otherFindings', label: 'Other Findings', type: 'textarea' }],
-    },
+    aortaSection(),
+    liverSection,
+    gallbladderSection,
+    portalVeinSection,
+    cbdSection,
+    pancreasSection,
+    rightKidneySection(),
+    leftKidneySection(),
+    spleenSection,
+    otherSection,
     commentsSection,
     interpretationSection,
   ],
-  groupReveals: [
-    {
-      id: 'aortaReveal',
-      triggerFieldIds: ['aortaProx', 'aortaMid', 'aortaDist'],
-      targetIds: ['aortaDissection', 'aortaIliacs'],
-      condition: (values) => values.some((v) => parseFloat(v) >= 3.5),
-    },
-  ],
+  groupReveals: [aortaGroupReveal],
 };

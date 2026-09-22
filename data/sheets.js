@@ -3,6 +3,7 @@
 // new standalone sheet page is added.
 export const SHEETS = [
   { id: 'abdominal', label: 'Abdominal', href: 'index.html' },
+  { id: 'abdominalDuplex', label: 'Abdominal Duplex', href: 'abdominalDuplex.html' },
   { id: 'thyroid', label: 'Thyroid', href: 'thyroid.html' },
   { id: 'carotid', label: 'Carotid', href: 'carotid.html' },
   { id: 'echo', label: 'Echo', href: 'echo.html' },
@@ -10,4 +11,5 @@ export const SHEETS = [
   { id: 'misc', label: 'Misc', href: 'misc.html' },
   { id: 'renal', label: 'Renal', href: 'renal.html' },
   { id: 'arterialLe', label: 'Arterial Doppler LE', href: 'arterialLe.html' },
+  { id: 'abdominalAorta', label: 'Abdominal Aorta', href: 'abdominalAorta.html' },
 ];
