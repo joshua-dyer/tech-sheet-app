@@ -564,7 +564,99 @@ Same structure as Uterus: Length, Height, Width (cm, step 0.1), plus
 computed Volume using the same 0.523 formula.
 
  
-  ## 18. Explicitly Out of Scope (Phase 1)
+## 18. Breast Ultrasound Sheet — Fields
+
+The simplest of the recent additions — no structured findings table, no
+computed fields. Deliberately keeps BI-RADS-style scoring out of tech
+scope (rarely performed, techs aren't trained to apply it) — that
+judgment is left entirely to the interpreting physician.
+
+### History
+- Patient History of Breast Cancer: Yes/No radio, no reveal. Purely
+  informational — the practice's radiology group requires a "Yes"
+  finding to be referred to a specialist, so this line confirms a
+  case is appropriate to read when marked "No."
+
+### Diagram Markup
+Uses the shared Diagram Markup feature (Section 7). Image:
+/images/breast-diagram.png. Freehand, unconstrained marks — same
+convention as Carotid/Renal/Arterial (not Thyroid's numbered-circle
+convention as a coded feature), though techs do often write numbers by
+hand as part of their freehand strokes to correlate with manual notes
+in Technologist Comments/Physician Interpretation. No structured
+findings table; all per-mass detail is documented as free text.
+
+
+## 19. Scrotal Ultrasound Sheet — Fields
+
+Simple, measurement-only sheet — no diagram, no table.
+
+### Right Testicle / Left Testicle
+Each side: Length, Height, Width (cm, step 0.1), plus a computed,
+read-only Volume field (cm³) = Length × Width × Height × 0.523, using
+the existing computedFields mechanism (same constant as Kidney/Uterus/
+Ovary Volume). Each side also has a free-text field: "Epididymis
+Appearance."
+
+
+
+## 20. Arterial Doppler UE Sheet — Fields
+
+Naming: id `arterialUe`, file names `arterialUe.html` /
+`data/arterialUeSheet.js` / `js/arterialUeApp.js`, nav label "Arterial
+Doppler UE", page title "Arterial Doppler Upper Extremities Tech
+Sheet" — same LE/UE convention as Venous and Arterial LE.
+
+### Vessel Table
+layout: 'table' pattern (same mechanism as Arterial LE). Six fixed
+rows: Vertebral, Subclavian, Axillary, Brachial, Radial, Ulnar. Each
+row has Right and Left columns, each containing:
+- Peak Systolic Velocity (cm/s) — number
+- Flow Pattern — dropdown: Triphasic / Biphasic / Monophasic / No Flow
+  Detected (matches the full-word convention Arterial LE was updated
+  to use)
+- Segmental Pressure (mmHg) — number
+
+### Maximum Brachial Pressure
+A new computed field: MAX(Right Brachial Segmental Pressure, Left
+Brachial Segmental Pressure), read-only, displayed once (not per side).
+This is the first computed field in the app whose own inputs come from
+two OTHER fields already inside the same vessel table, rather than
+standalone entry fields.
+
+### WBI (Wrist-Brachial Index)
+One computed, read-only field per side. Formula:
+WBI = MAX(Radial Segmental Pressure, Ulnar Segmental Pressure)
+÷ Maximum Brachial Pressure
+
+
+using that side's own Radial/Ulnar values. Unlike Arterial LE's ABI
+(which divides by a single manually-entered shared denominator), WBI's
+denominator (Maximum Brachial Pressure) is itself a computed field —
+the first two-stage computed chain in the app: raw inputs → Maximum
+Brachial Pressure → WBI. Displays "—" if either side's source pressures
+or the Maximum Brachial Pressure are missing/zero.
+
+### Reference Ranges
+Static reference display (static-table, on-screen only, omitted from
+print):
+
+| WBI Range | Interpretation |
+|---|---|
+| 0.8 – 1.3 | Normal |
+| < 0.8 | Obstructive Disease |
+
+No calcified-vessel-wall note (unlike Arterial LE's ABI table) — this
+finding is not clinically expected in the brachial vessels and would
+be documented via Technologist Comments in the rare event it occurred.
+
+### Shared Sections
+Demographics, Technologist Comments, Physician Interpretation. No
+diagram markup on this sheet.
+
+
+
+## 21. Explicitly Out of Scope (Phase 1)
 - Auto-population of Technologist Comments based on measurement values
   (Liver >16.5cm, Kidney Cortex <1.3cm, Spleen ≥13cm) — this is planned
   for Phase 2, after the visual/layout design is finalized. Do not implement the auto-population logic yet, but the Technologist Comments field should exist as a plain textarea now.
@@ -572,14 +664,14 @@ computed Volume using the same 0.523 formula.
   Print/PDF feature in Section 6, not stored anywhere at this time)
 - Any backend, database, or account system
 
-## 19. Architecture Note
+## 22. Architecture Note
 Build with reuse in mind: this is the first of ~15 planned tech sheets
 (8 common). Favor a reusable field/section component pattern over
 one-off hand-coded HTML per form, so future sheet types can be added
 primarily as configuration/content rather than new engineering.
 
 
-## 20. Verification & Testing Environment
+## 23. Verification & Testing Environment
 
 This environment has no browser automation tooling available (no
 Playwright, Puppeteer, or similar) — do not attempt to install any for

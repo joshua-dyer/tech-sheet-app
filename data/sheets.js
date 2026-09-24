@@ -19,4 +19,7 @@ export const SHEETS = [
   { id: 'arterialLe', label: 'Arterial Doppler LE', href: 'arterialLe.html', group: 'common' },
   { id: 'abdominalAorta', label: 'Abdominal Aorta', href: 'abdominalAorta.html', group: 'common' },
   { id: 'pelvic', label: 'Pelvic Ultrasound', href: 'pelvic.html', group: 'uncommon' },
+  { id: 'breast', label: 'Breast Ultrasound', href: 'breast.html', group: 'uncommon' },
+  { id: 'scrotal', label: 'Scrotal Ultrasound', href: 'scrotal.html', group: 'uncommon' },
+  { id: 'arterialUe', label: 'Arterial Doppler UE', href: 'arterialUe.html', group: 'uncommon' },
 ];
