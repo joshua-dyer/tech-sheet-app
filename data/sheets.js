@@ -22,4 +22,5 @@ export const SHEETS = [
   { id: 'breast', label: 'Breast Ultrasound', href: 'breast.html', group: 'uncommon' },
   { id: 'scrotal', label: 'Scrotal Ultrasound', href: 'scrotal.html', group: 'uncommon' },
   { id: 'arterialUe', label: 'Arterial Doppler UE', href: 'arterialUe.html', group: 'uncommon' },
+  { id: 'venousUe', label: 'Venous Doppler UE', href: 'venousUe.html', group: 'uncommon' },
 ];

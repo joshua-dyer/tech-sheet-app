@@ -505,6 +505,14 @@ Placed immediately after their corresponding Kidney section.
   computedFields mechanism: Renal Artery Systolic ÷ Aortic Peak Systolic
   (same side). Displays "—" if either input is missing/invalid.
 
+### Umbilical Vein Assessment
+Radio group: Re-canalized / No Flow Detected / Not Visualized. No
+default selection. Placed adjacent to Portal Vein Assessment (clinically
+related to portal hypertension findings). Added to the shared Abdominal
+section set, so it automatically appears on both the Abdominal and
+Abdominal Duplex sheets without separate implementation.
+
+
  
  ## 16. Abdominal Aorta Sheet — Fields
 
@@ -655,8 +663,37 @@ Demographics, Technologist Comments, Physician Interpretation. No
 diagram markup on this sheet.
 
 
+## 21. Venous Doppler UE Sheet — Fields
 
-## 21. Explicitly Out of Scope (Phase 1)
+Naming: id `venousUe`, file names `venousUe.html` /
+`data/venousUeSheet.js` / `js/venousUeApp.js`, nav label "Venous
+Doppler UE", page title "Venous Doppler Upper Extremities Tech Sheet" —
+same LE/UE convention as Venous LE and Arterial LE/UE.
+
+The simplest of the vessel-table sheets — no insufficiency assessment,
+no computed fields, no diagram.
+
+### Vessel Table
+layout: 'table' pattern, same mechanism as Venous LE. Seven fixed rows:
+Internal Jugular, Subclavian, Axillary, Brachial, Basilic, Ulnar,
+Radial. Each row has Right and Left columns, each with the same three
+dropdowns as Venous LE (Compression: Good/Fair/Poor, Flow: Normal/
+Reduced/None Visualized, Thrombus: Negative/Partial/Chronic/Positive),
+each defaulting to its normal/negative option.
+
+Studies on this sheet are typically unilateral in practice, but the
+sheet itself is built bilateral (both columns present) — consistent
+with every other vessel-table sheet's print behavior: an untouched row
+prints in full once the section is shown, including any still-default
+cells, rather than suppressing an unused column. No new
+per-column-omission logic was introduced for this case.
+
+### Shared Sections
+Demographics, Technologist Comments, Physician Interpretation. No
+diagram markup, no Venous Insufficiency Assessment section (unlike
+Venous LE).
+
+## 22. Explicitly Out of Scope (Phase 1)
 - Auto-population of Technologist Comments based on measurement values
   (Liver >16.5cm, Kidney Cortex <1.3cm, Spleen ≥13cm) — this is planned
   for Phase 2, after the visual/layout design is finalized. Do not implement the auto-population logic yet, but the Technologist Comments field should exist as a plain textarea now.
@@ -664,14 +701,14 @@ diagram markup on this sheet.
   Print/PDF feature in Section 6, not stored anywhere at this time)
 - Any backend, database, or account system
 
-## 22. Architecture Note
+## 23. Architecture Note
 Build with reuse in mind: this is the first of ~15 planned tech sheets
 (8 common). Favor a reusable field/section component pattern over
 one-off hand-coded HTML per form, so future sheet types can be added
 primarily as configuration/content rather than new engineering.
 
 
-## 23. Verification & Testing Environment
+## 24. Verification & Testing Environment
 
 This environment has no browser automation tooling available (no
 Playwright, Puppeteer, or similar) — do not attempt to install any for

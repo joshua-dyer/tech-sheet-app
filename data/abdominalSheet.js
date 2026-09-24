@@ -154,6 +154,19 @@ export const portalVeinSection = {
   ],
 };
 
+export const umbilicalVeinSection = {
+  id: 'umbilicalVein',
+  title: 'Umbilical Vein Assessment',
+  fields: [
+    {
+      id: 'umbilicalVein',
+      label: 'Umbilical Vein',
+      type: 'radio',
+      options: ['Re-canalized', 'No Flow Detected', 'Not Visualized'],
+    },
+  ],
+};
+
 export const cbdSection = {
   id: 'cbd',
   title: 'CBD',
@@ -210,6 +223,7 @@ export const abdominalSheet = {
     liverSection,
     gallbladderSection,
     portalVeinSection,
+    umbilicalVeinSection,
     cbdSection,
     pancreasSection,
     rightKidneySection(),
