@@ -115,6 +115,7 @@ export const gallbladderSection = {
         'Pericholecystic Fluid',
         'Surgically Absent',
         "Positive Murphy's Sign",
+        "Not Visualized",
       ],
       // Reflects that the technologist didn't flag anything — not a
       // clinical assertion, which remains the physician's call. Print
