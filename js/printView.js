@@ -33,11 +33,14 @@ function renderFieldRow(field) {
   // just for the checked case instead of the empty one.
   const checkedOverride = field.type === 'checkbox' && hasValue(field) ? field.checkedPrintText : undefined;
   const value = checkedOverride ?? (hasValue(field) ? getDisplayValue(field) : field.emptyPrintText);
+  // largePrintValue: true visibly enlarges just the value, not the label —
+  // e.g. Demographics' Name/DOB fields, per physician request.
+  const valueClass = field.largePrintValue ? ' print-value-large' : '';
   if (field.omitPrintLabel) {
-    return `<div class="print-row"><span class="print-value">${escapeHtml(value)}</span></div>`;
+    return `<div class="print-row"><span class="print-value${valueClass}">${escapeHtml(value)}</span></div>`;
   }
   const label = field.unit ? `${field.label} (${field.unit})` : field.label;
-  return `<div class="print-row"><span class="print-label">${escapeHtml(label)}</span><span class="print-value">${escapeHtml(value)}</span></div>`;
+  return `<div class="print-row"><span class="print-label">${escapeHtml(label)}</span><span class="print-value${valueClass}">${escapeHtml(value)}</span></div>`;
 }
 
 // Returns '' (and is skipped entirely) when nothing in the section was ever
@@ -273,10 +276,18 @@ export function openPrintView(schema) {
     padding-bottom: 0.1rem;
     margin: 0 0 0.2rem;
   }
-  .print-row { display: flex; gap: 0.4rem; padding: 0.05rem 0; }
+  /* align-items: baseline (not the flex default, stretch) so differently-
+     sized label/value text (see .print-value-large below) share a reading
+     baseline instead of each starting at the top of its own stretched box —
+     a no-op for every normal same-size row, since stretch and baseline look
+     identical when both items share one font size. */
+  .print-row { display: flex; align-items: baseline; gap: 0.4rem; padding: 0.05rem 0; }
   .print-label { font-weight: 600; flex: 0 0 auto; }
   .print-label::after { content: ':'; }
   .print-value { white-space: pre-wrap; }
+  /* At least double the body's 0.82rem — physician-requested, see
+     data/demographicsSection.js's largePrintValue flag. */
+  .print-value-large { font-size: 1.64rem; }
   .interpretation-impression { white-space: pre-wrap; min-height: 3em; margin: 0.4rem 0 1.2rem; }
   .signature-block { margin-top: 1.5rem; }
   .signature-line { width: 260px; border-top: 1px solid #333; margin-bottom: 0.2rem; }

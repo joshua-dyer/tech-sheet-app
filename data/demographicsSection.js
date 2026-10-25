@@ -6,11 +6,14 @@ export const demographicsSection = {
   id: 'demographics',
   title: 'Demographics',
   fields: [
-    { id: 'lastName', label: 'Last Name', type: 'text' },
-    { id: 'firstName', label: 'First Name', type: 'text' },
+    // largePrintValue: true — physician-requested, visibly larger printed
+    // value (label stays normal size) so Name/DOB stand out on the printed
+    // sheet; see js/printView.js's renderFieldRow for the generic handling.
+    { id: 'lastName', label: 'Last Name', type: 'text', largePrintValue: true },
+    { id: 'firstName', label: 'First Name', type: 'text', largePrintValue: true },
     { id: 'patientId', label: 'ID', type: 'text' },
     { id: 'examDate', label: 'Date of Exam', type: 'date' },
-    { id: 'dob', label: 'Date of Birth', type: 'date' },
+    { id: 'dob', label: 'Date of Birth', type: 'date', largePrintValue: true },
     {
       id: 'sex',
       label: 'Sex',
